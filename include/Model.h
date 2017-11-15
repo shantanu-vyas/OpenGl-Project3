@@ -11,6 +11,17 @@ typedef struct Model
   int num_vertices;
 } Model;
 
+typedef struct ShaderModel //Where color is defined in the shader not the application
+{
+  Vec4* vertices;
+  int num_vertices;
+  Vec4 ambient;
+  Vec4 specular;
+  Vec4 difuse;
+  float shine;
+} ShaderModel;
+
+
 void applyModelTranformation(Model* model, const Mat4* const mat, const int* const num_vertices);
 void translateModelVec4(Model* model, const int* const num_vertices, const Vec4* const vec);
 void rotateYOriginModel(Model* model, const int* const num_vertices, int degree);
@@ -18,6 +29,8 @@ void printVertices(Model* model, const int* const num_vertices);
 void scaleXModel(Model* model, const int* const num_vertices, float factor);
 void scaleYModel(Model* model, const int* const num_vertices, float factor);
 void deepCopyModel(Model* ret, const Model* const model, const int* const num_vertices);
+void flattenModelList(Model** list, Vec4** v, Vec4** c, int* nv, int* nm);
+void makeCube(Model* cube);
 
 
 

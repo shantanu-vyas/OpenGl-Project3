@@ -1,5 +1,14 @@
 #include "Model.h"
 
+Vec4 cube_vertices[] = {{1,1,1,1},{-1,1,1,1},{-1,-1,1,1},{-1,-1,1,1},{1,-1,1,1},
+                        {1,1,1,1},{1,1,1,1},{1,-1,1,1},{1,-1,-1,1},{1,-1,-1,1},
+                        {1,1,-1,1},{1,1,1,1},{1,1,1,1},{1,1,-1,1},{-1,1,-1,1},
+                        {-1,1,-1,1},{-1,1,1,1},{1,1,1,1},{-1,1,1,1},{-1,1,-1,1},
+                        {-1,-1,-1,1},{-1,-1,-1,1},{-1,-1,1,1},{-1,1,1,1},{-1,-1,-1,1},
+                        {1,-1,-1,1},{1,-1,1,1},{1,-1,1,1},{-1,-1,1,1},{-1,-1,-1,1},
+                        {1,-1,-1,1},{-1,-1,-1,1},{-1,1,-1,1},{-1,1,-1,1},{1,1,-1,1},
+                        {1,-1,-1,1}};
+
 void applyModelTranformation(Model* model, const Mat4* const mat, const int* const num_vertices)
 {
   for (int i = 0; i < *num_vertices; i++)
@@ -69,4 +78,53 @@ void deepCopyModel(Model* ret, const Model* const model, const int* const num_ve
       ret->colors[i] = model->colors[i];
     }
     
+}
+void makeCube(Model* cube)
+{
+  Vec4 red = {1,0,0,1};
+  cube->vertices = malloc(36*sizeof(Vec4));
+  cube->colors = malloc(36*sizeof(Vec4));
+  cube->num_vertices = 36;
+  for (int i = 0; i < 36; i++)
+    {
+      cube->vertices[i] = cube_vertices[i];
+      cube->colors[i] = red;
+    }
+  cube->num_vertices = 36;
+}
+void flattenModelList(Model** list, Vec4** v, Vec4** c, int* nv, int* nm)
+{
+  Model* deflist = *list; //idk why i cant figure out why this wont work otherwise
+
+  int vertex_counter = 0;
+  for (int i = 0; i < *nm; i++)
+    {
+       for (int p = 0; p < deflist[i].num_vertices; p++)
+      	{
+      	  vertex_counter++;
+      	}
+    }
+
+  printf("vertex counter is %d \n",vertex_counter);
+  *v = (Vec4*)malloc(sizeof(Vec4)*vertex_counter);
+  *c = (Vec4*)malloc(sizeof(Vec4)*vertex_counter);
+  
+  Vec4 a = {1,1,1,1};
+  /* (*v)[0] = a; */
+  /* (*v)[1] = a; */
+  /* (*v)[2] = a; */
+  /* (*v)[3] = a; */
+
+  int counter = 0;
+
+  for (int i = 0; i < *nm; i++)
+    {
+      for (int p = 0; p < deflist[i].num_vertices; p++)
+  	{
+  	  (*v)[counter] = deflist[i].vertices[p];
+  	  (*c)[counter] = deflist[i].colors[p];
+  	  counter++;
+  	}
+    }
+  *nv = vertex_counter;
 }
