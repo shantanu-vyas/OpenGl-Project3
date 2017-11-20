@@ -15,7 +15,7 @@
   2) Handle lighting ...
   3) switch colors to shader from application
 */
-
+#include <time.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <GL/freeglut_ext.h>
@@ -32,6 +32,9 @@
 #include "Balls.h"
 
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
+#define FPS 60.f
+
+clock_t global_clock_prev; // last time rendered/physics tick
 
 GLuint pj_location;
 GLuint mv_location;
@@ -140,15 +143,42 @@ void display(void)
   glutSwapBuffers();
 }
 
+void ballPhysics(GLfloat delta_sec)
+{ 
+  rotateY(&transformation_list[1], 1.f * delta_sec);
+  rotateY(&transformation_list[2], 2.f * delta_sec);
+  rotateY(&transformation_list[3], 3.f * delta_sec);
+  rotateY(&transformation_list[4], 4.f * delta_sec);
+  rotateY(&transformation_list[5], 5.f * delta_sec);
+}
+
+void genModelShadows()
+{
+}
+
 void idle_func()
 {
-  rotateY(&transformation_list[1], .01f);
-  rotateY(&transformation_list[2], .02f);
-  rotateY(&transformation_list[3], .03f);
-  rotateY(&transformation_list[4], .04f);
-  rotateY(&transformation_list[5], .05f);
-  display();
+  // delta time from last rendering
+  clock_t now = clock();
+  GLfloat delta_sec = (((GLfloat)now - (GLfloat)global_clock_prev) / (GLfloat)CLOCKS_PER_SEC);
+  int render = 0;
+
+  while (delta_sec >= 1.f / FPS) {
+    render = 1; 
+    ballPhysics(delta_sec);
+    genModelShadows();
+
+    delta_sec--;
+  }
+  if (render){
+    glutPostRedisplay();
+    global_clock_prev = now; // only changes if physics/camera ticked
+  } 
+
+
 }
+
+
 void keyboard(unsigned char key, int mousex, int mousey)
 {
   if(key == 'q')
