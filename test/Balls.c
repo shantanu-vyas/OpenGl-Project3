@@ -38,11 +38,6 @@ Mat4 mv_matrix =
    {0.0, 1.0, 0.0, 0.0},
    {0.0, 0.0, 1.0, 0.0},
    {0.0, 0.0, 0.0, 1.0}};
-Mat4 tr_matrix =
-  {{1.0, 0.0, 0.0, 0.0},
-   {0.0, 1.0, 0.0, 0.0},
-   {0.0, 0.0, 1.0, 0.0},
-   {0.0, 0.0, 0.0, 1.0}};
 
 float theta = 0;
 float phi = 0;
@@ -66,6 +61,8 @@ int num_vertices;
 
 Model* model_list;
 int num_models;
+
+Mat4* transformation_list;
 
 
 void init(void)
@@ -109,14 +106,18 @@ void display(void)
 
   glUniformMatrix4fv(pj_location, 1, GL_FALSE, (GLfloat *) &pj_matrix);
   glUniformMatrix4fv(mv_location, 1, GL_FALSE, (GLfloat *) &mv_matrix);
-  glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &tr_matrix);
-
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  //glBindVertexArray(vertices);
-  glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+
+
+  int vc = 0;
+  for (int i = 0; i < num_models; i++)
+    {
+      vc+=model_list[i].num_vertices;
+      glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &transformation_list[i]);
+      glDrawArrays(GL_TRIANGLES, 0, vc);
+    }
 
   glutSwapBuffers();
-
 }
 
 void idle_func()
@@ -147,8 +148,8 @@ void keyboard(unsigned char key, int mousex, int mousey)
   /* printf("sin theta %f\n",sin(theta)); */
   /* printf("cos phi %f\n",cos(phi)); */
   /* printf("cos theta %f\n",cos(theta)); */
-  printf("theta %f\n",theta);
-  printf("phi %f\n",phi);
+  /* printf("theta %f\n",theta); */
+  /* printf("phi %f\n",phi); */
   
   eye.x = eye_radius * sinf(theta) * cosf(phi);
   eye.z = eye_radius * sinf(theta) * sinf(phi);
@@ -163,12 +164,12 @@ void keyboard(unsigned char key, int mousex, int mousey)
 
 void genModels()
 {
-  identity(&sphere1_tr);
-  identity(&sphere2_tr);
-  identity(&sphere3_tr);
-  identity(&sphere4_tr);
-  identity(&sphere5_tr);
-  identity(&light_sphere_tr);
+  /* identity(&sphere1_tr); */
+  /* identity(&sphere2_tr); */
+  /* identity(&sphere3_tr); */
+  /* identity(&sphere4_tr); */
+  /* identity(&sphere5_tr); */
+  /* identity(&light_sphere_tr); */
 
   Model sphere1;
   Model sphere2;
@@ -191,7 +192,6 @@ void genModels()
   makeSphere(&sphere1);
   Vec4 trans1 = {0,1,0,0};
   translateModelVec4(&sphere1, &sphere1.num_vertices, &trans1);
-  
 
   makeSphere(&sphere2);
   Vec4 trans2 = {2,1,0,0};
@@ -234,6 +234,11 @@ void genModels()
   model_list[5] = sphere5;
   num_models = 6;
 
+  transformation_list = malloc(sizeof(Mat4)*num_models);
+  for (int i = 0; i < num_models; i++)
+    {
+      identity(&transformation_list[i]);
+    }
 }
 
 int main(int argc, char **argv)
