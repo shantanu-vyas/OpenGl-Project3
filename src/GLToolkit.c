@@ -31,24 +31,32 @@ void genFrustum(Mat4* ret, float left, float right, float bottom,float top, floa
 
 void genLookAt(Mat4* ret, const Vec4* const eye, const Vec4* const at, const Vec4* const up)
 {
-  identity(ret);
+  /* printVector(eye); */
+  /* printVector(at); */
+  /* printVector(up); */
   
-  Vec4 n;
+  identity(ret);
+  Vec4 n; //forward
   subVec4(&n,eye,at);
   normalize(&n,&n);
 
-  Vec4 u;
+  Vec4 u; //side
   cross(&u,&n,up);
   normalize(&u,&u);
 
-  Vec4 v;
+  /* printf("u\n"); */
+  /* printVector(&n); */
+  /* printVector(up); */
+  /* printf("\n"); */
+
+  Vec4 v; //up
   cross(&v,&n,&u);
   normalize(&v,&v);
 
   /* printVector(&n); */
   /* printVector(&u); */
   /* printVector(&v); */
-  
+
   float x = -1*(eye->x*u.x) - (eye->y*u.y)- (eye->z*u.z);
   float y = -1*(eye->x*v.x) - (eye->y*v.y)- (eye->z*v.z);
   float z = -1*(eye->x*n.x) - (eye->y*n.y)- (eye->z*n.z);

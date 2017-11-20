@@ -76,7 +76,7 @@ void normalize(Vec4* ret, const Vec4* const vec)
   float dd = 0;
   dot(&dd,&temp,&temp);
   float length = sqrt(dd);
-  
+  ret->w = vec->w;
   scalarMultVec4(ret,&temp,1.0/sqrt(dd));
 }
 
@@ -402,8 +402,8 @@ void rotateY(Mat4* ret, const double degree)
 }
 void rotateZ(Mat4* ret, const double degree)
 {
-  Mat4 rotZ = {{cos(degree),-1*sin(degree),0,0},
-	       {sin(degree),cos(degree),0,0},
+  Mat4 rotZ = {{cosf(degree),-1*sinf(degree),0,0},
+	       {sinf(degree),cosf(degree),0,0},
 	       {0,0,1,0},
 	       {0,0,0,1}};
   matMult(ret,ret,&rotZ);

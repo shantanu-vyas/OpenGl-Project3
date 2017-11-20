@@ -19,6 +19,15 @@ GLuint pj_location;
 GLuint mv_location;
 GLuint tr_location;
 
+const Vec4 red = {1,0,0,1};
+const Vec4 green = {0,1,0,1};
+const Vec4 blue = {0,0,1,1};
+const Vec4 cgray = {.3,.3,.3,1};
+const Vec4 yellow = {1,1,0,1};
+const Vec4 purple = {1,0,1,1};
+const Vec4 cyan = {0,1,1,1};
+
+
 Mat4 pj_matrix =
   {{1.0, 0.0, 0.0, 0.0},
    {0.0, 1.0, 0.0, 0.0},
@@ -35,9 +44,13 @@ Mat4 tr_matrix =
    {0.0, 0.0, 1.0, 0.0},
    {0.0, 0.0, 0.0, 1.0}};
 
-Vec4 eye = {0,10,0,1};
+float theta = 0;
+float phi = 0;
+
+float eye_radius = 20;
+Vec4 eye = {0,30,0,1};
 Vec4 at = {0,0,0,1};
-Vec4 up = {0,1,0,0};
+Vec4 up = {0,-1,0,0};
 Vec4 lightPos = {0,2,0,1};
 
 Mat4 sphere1_tr;
@@ -99,7 +112,7 @@ void display(void)
   glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &tr_matrix);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glBindVertexArray(vertices);
+  //glBindVertexArray(vertices);
   glDrawArrays(GL_TRIANGLES, 0, num_vertices);
 
   glutSwapBuffers();
@@ -113,6 +126,37 @@ void keyboard(unsigned char key, int mousex, int mousey)
 {
   if(key == 'q')
     exit(0);
+  if (key == '1')
+    {
+      theta+=M_PI/32;
+    }
+  if (key == '2')
+    {
+      theta-=M_PI/32;
+    }
+  if (key == '3')
+    {
+      phi+=M_PI/32;
+      //printf("%f\n",phi);
+    }
+  if(key == '4')
+    {
+      phi-=M_PI/32;
+    }
+
+  /* printf("sin theta %f\n",sin(theta)); */
+  /* printf("cos phi %f\n",cos(phi)); */
+  /* printf("cos theta %f\n",cos(theta)); */
+  printf("theta %f\n",theta);
+  printf("phi %f\n",phi);
+  
+  eye.x = eye_radius * sinf(theta) * cosf(phi);
+  eye.z = eye_radius * sinf(theta) * sinf(phi);
+  eye.y = eye_radius * cosf(theta);
+
+
+  printVector(&eye);
+  genLookAt(&mv_matrix,&eye,&at,&up);
 
   glutPostRedisplay();
 }
@@ -133,20 +177,77 @@ void genModels()
   Model sphere5;
   Model light_sphere;
   Model ground_cube;
- 
-  model_list = malloc(sizeof(Model)*7);
-  num_models = 7;
+
+  makeCube(&ground_cube);
+  scaleYModel(&ground_cube,&ground_cube.num_vertices,.001);
+  scaleXModel(&ground_cube,&ground_cube.num_vertices,10);
+  scaleZModel(&ground_cube,&ground_cube.num_vertices,10);
+  /* scaleYModel(&ground_cube,&ground_cube.num_vertices,.4); */
+  /* scaleXModel(&ground_cube,&ground_cube.num_vertices,.4); */
+  /* scaleZModel(&ground_cube,&ground_cube.num_vertices,.4); */
+
+
+  /*change these to spheres after getting julians sphere code */
+  makeSphere(&sphere1);
+  Vec4 trans1 = {0,1,0,0};
+  translateModelVec4(&sphere1, &sphere1.num_vertices, &trans1);
   
-  
+
+  makeSphere(&sphere2);
+  Vec4 trans2 = {2,1,0,0};
+  translateModelVec4(&sphere2, &sphere2.num_vertices, &trans2);
+
+  makeSphere(&sphere3);
+  Vec4 trans3 = {4,1,0,0};
+  translateModelVec4(&sphere3, &sphere3.num_vertices, &trans3);
+
+  makeSphere(&sphere4);
+  Vec4 trans4 = {6,1,0,0};
+  translateModelVec4(&sphere4, &sphere4.num_vertices, &trans4);
+
+  makeSphere(&sphere5);
+  Vec4 trans5 = {8,1,0,0};
+  translateModelVec4(&sphere5, &sphere5.num_vertices, &trans5);
+
+  setColor(&ground_cube,&cgray);
+  /* for (int i = 0; i < 36; i++) */
+  /*   { */
+  /*     float x = 0 + rand() % (1+1); */
+  /*     float y = 0 + rand() % (1+1); */
+  /*     float z = 0 + rand() % (1+1); */
+  /*     Vec4 temp = {x,y,z,1}; */
+  /*     ground_cube.colors[i] = temp; */
+  /*   } */
+
+  setColor(&sphere1,&red);
+  setColor(&sphere2,&green);
+  setColor(&sphere3,&blue);
+  setColor(&sphere4,&yellow);
+  setColor(&sphere5,&purple);
+
+  model_list = malloc(sizeof(Model)*6);
+  model_list[0] = ground_cube;
+  model_list[1] = sphere1;
+  model_list[2] = sphere2;
+  model_list[3] = sphere3;
+  model_list[4] = sphere4;
+  model_list[5] = sphere5;
+  num_models = 6;
 
 }
 
 int main(int argc, char **argv)
 {
   genModels();
-  
+  flattenModelList(&model_list,&vertices,&colors,&num_vertices,&num_models);
+
+  eye.x = eye_radius * sin(theta) * cos(phi);
+  eye.y = eye_radius * sin(theta) * sin(phi);
+  eye.z = eye_radius * cos(theta);
+
   genPerspective(&pj_matrix,30,1,.01,10);
   genLookAt(&mv_matrix,&eye,&at,&up);
+
 
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
