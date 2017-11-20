@@ -20,7 +20,7 @@ typedef struct Mat4
   Vec4 w;
 } Mat4;
 
-/* For refrence this is what a mat looks like 
+/* For reference this is what a mat looks like 
     X      Y      Z      W   
    +-----------------------+
 X  | x.x | y.x | z.x | w.x |
