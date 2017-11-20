@@ -112,9 +112,9 @@ void display(void)
   int vc = 0;
   for (int i = 0; i < num_models; i++)
     {
-      vc+=model_list[i].num_vertices;
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &transformation_list[i]);
-      glDrawArrays(GL_TRIANGLES, 0, vc);
+      glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
+      vc+=model_list[i].num_vertices;
     }
 
   glutSwapBuffers();
@@ -122,6 +122,12 @@ void display(void)
 
 void idle_func()
 {
+  rotateY(&transformation_list[1], .01);
+  rotateY(&transformation_list[2], .02);
+  rotateY(&transformation_list[3], .03);
+  rotateY(&transformation_list[4], .04);
+  rotateY(&transformation_list[5], .05);
+  display();
 }
 void keyboard(unsigned char key, int mousex, int mousey)
 {
@@ -150,7 +156,7 @@ void keyboard(unsigned char key, int mousex, int mousey)
   /* printf("cos theta %f\n",cos(theta)); */
   /* printf("theta %f\n",theta); */
   /* printf("phi %f\n",phi); */
-  
+
   eye.x = eye_radius * sinf(theta) * cosf(phi);
   eye.z = eye_radius * sinf(theta) * sinf(phi);
   eye.y = eye_radius * cosf(theta);

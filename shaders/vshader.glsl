@@ -11,5 +11,5 @@ uniform mat4 transformation_matrix;
 void main()
 {
 	color = vColor;
-	gl_Position = transformation_matrix*projection_matrix*modelview_matrix*vPosition/vPosition.w;
+	gl_Position = projection_matrix*modelview_matrix*transformation_matrix*vPosition/vPosition.w;
 }
