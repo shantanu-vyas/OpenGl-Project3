@@ -9,6 +9,7 @@ typedef struct Model
   Vec4* vertices;
   Vec4* colors;
   int num_vertices;
+  Mat4 transform;
 } Model;
 
 typedef struct ShaderModel //Where color is defined in the shader not the application

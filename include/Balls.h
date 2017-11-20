@@ -5,7 +5,7 @@
 
 void idle_func();
 void keyboard(unsigned char key, int mousex, int mousey);
-void ballPhysics(GLfloat delta_sec);
+void modelPhysics(GLfloat delta_sec);
 void genModels();
 void genModelShadows();
 

@@ -85,8 +85,6 @@ int num_vertices;
 Model* model_list;
 int num_models;
 
-Mat4* transformation_list;
-
 
 void init(void)
 {
@@ -135,7 +133,7 @@ void display(void)
   int vc = 0;
   for (int i = 0; i < num_models; i++)
     {
-      glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &transformation_list[i]);
+      glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
       glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
       vc+=model_list[i].num_vertices;
     }
@@ -143,13 +141,13 @@ void display(void)
   glutSwapBuffers();
 }
 
-void ballPhysics(GLfloat delta_sec)
+void modelPhysics(GLfloat delta_sec)
 { 
-  rotateY(&transformation_list[1], 1.f * delta_sec);
-  rotateY(&transformation_list[2], 2.f * delta_sec);
-  rotateY(&transformation_list[3], 3.f * delta_sec);
-  rotateY(&transformation_list[4], 4.f * delta_sec);
-  rotateY(&transformation_list[5], 5.f * delta_sec);
+  // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0
+  for (int i = 0; i < num_models; i++){
+    rotateY(&model_list[i].transform, ((GLfloat) i) * delta_sec);
+  }
+
 }
 
 void genModelShadows()
@@ -165,7 +163,7 @@ void idle_func()
 
   while (delta_sec >= 1.f / FPS) {
     render = 1; 
-    ballPhysics(delta_sec);
+    modelPhysics(delta_sec);
     genModelShadows();
 
     delta_sec--;
@@ -289,11 +287,10 @@ void genModels()
   model_list[4] = sphere4;
   model_list[5] = sphere5;
   num_models = 6;
-
-  transformation_list = malloc(sizeof(Mat4)*num_models);
+  // init tranformations
   for (int i = 0; i < num_models; i++)
     {
-      identity(&transformation_list[i]);
+      identity(&model_list[i].transform);
     }
 }
 
