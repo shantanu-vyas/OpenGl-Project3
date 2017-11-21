@@ -73,7 +73,7 @@ Vec4 eye = {0.f, 30.f, 0.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
-Vec4 lightPos = {100.f, -10.f, 0.f, 1.f};
+Vec4 lightPos = {50.f, -30.f, 0.f, 1.f};
 
 Vec4* vertices;
 Vec4* colors;
@@ -125,7 +125,7 @@ void init(void)
   mv_location = glGetUniformLocation(program, "model_view");
   tr_location = glGetUniformLocation(program, "transformation");
   is_shadow = glGetUniformLocation(program, "isShadow");
-  //light_position = glGetUniformLocation(program, "vLight");
+  light_position = glGetUniformLocation(program, "vLight");
 
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -149,29 +149,24 @@ void display(void)
 
   glUniformMatrix4fv(pj_location, 1, GL_FALSE, (GLfloat *) &pj_matrix);
   glUniformMatrix4fv(mv_location, 1, GL_FALSE, (GLfloat *) &mv_matrix);
-  glUniformMatrix4fv(light_position, 1, GL_FALSE, (GLfloat *) &lightPos);
+  glUniform4fv(light_position, 1, (GLfloat *) &lightPos);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   int vc = 0;
   for (int i = 0; i < num_models; i++)
     {
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
-      is_shadow = 0;
-      glUniform1i(light_position,is_shadow);
+      glUniform1i(is_shadow,0);
       glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
       vc+=model_list[i].num_vertices;
     }
 
-  vc = 0;
-  for (int i = 0; i < num_models; i++)
+  vc = 36; //dont draw shadow for the ground cube 
+  for (int i = 1; i < num_models; i++)
     {
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
-      is_shadow = 1;
-      glUniform1i(light_position,is_shadow);
-      if (i != 0) //need to still do addition but no draw shadow
-        {
-          glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
-        }
+      glUniform1i(is_shadow,1);
+      glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
       vc+=model_list[i].num_vertices;
     }
 
@@ -238,6 +233,23 @@ void keyboard(unsigned char key, int mousex, int mousey)
     {
       phi-=M_PI/32.f;
     }
+  if (key == '+')
+    {
+      eye_radius--;
+    }
+  if (key == '-')
+    {
+      eye_radius++;
+    }
+  /* if(key == 'a') */
+  /*   { */
+  /*     eye.x += 1; */
+  /*     at.x += 1; */
+  /*     genLookAt(&mv_matrix,&eye,&at,&up); */
+  /*     glutPostRedisplay(); */
+  /*     return; */
+
+  /*   } */
 
   /* printf("sin theta %f\n",sin(theta)); */
   /* printf("cos phi %f\n",cos(phi)); */
@@ -340,9 +352,9 @@ int main(int argc, char **argv)
   flattenModelList(&model_list,&vertices,&colors,&num_vertices,&num_models);
   num_vertices = num_vertices*2-36;
 
-  eye.x = eye_radius * sin(theta) * cos(phi);
-  eye.y = eye_radius * sin(theta) * sin(phi);
-  eye.z = eye_radius * cos(theta);
+  eye.x = eye_radius * sinf(theta) * cosf(phi);
+  eye.z = eye_radius * sinf(theta) * sinf(phi);
+  eye.y = eye_radius * cosf(theta);
 
   genPerspective(&pj_matrix, 30.f , 1.f, .01f, 100.f);
   genLookAt(&mv_matrix,&eye,&at,&up);
