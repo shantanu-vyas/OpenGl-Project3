@@ -34,7 +34,7 @@
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 #define FPS 60.f
 
-clock_t global_clock_prev; // last time rendered/physics tick
+clock_t global_clock_prev; // last time rendered/physics ticked
 
 GLuint pj_location;
 GLuint mv_location;
@@ -71,13 +71,6 @@ Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
 Vec4 lightPos = {0.f, 2.f, 0.f, 1.f};
 
-Mat4 sphere1_tr;
-Mat4 sphere2_tr;
-Mat4 sphere3_tr;
-Mat4 sphere4_tr;
-Mat4 sphere5_tr;
-Mat4 light_sphere_tr;
-
 Vec4* vertices;
 Vec4* colors;
 int num_vertices;
@@ -111,10 +104,22 @@ void init(void)
   GLuint vColor = glGetAttribLocation(program, "vColor");
   glEnableVertexAttribArray(vColor);
   glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *) size);
+  /*
+  TODO yoink and use these things:
+  
+  in vec4 vPosition;
+  in vec4 vNormal;
+  in int isShadow;
+  out vec4 color;
 
-  pj_location = glGetUniformLocation(program, "projection_matrix");
-  mv_location = glGetUniformLocation(program, "modelview_matrix");
-  tr_location = glGetUniformLocation(program, "transformation_matrix");
+  uniform mat4 model_view, projection, transformation;
+  uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
+  uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
+  vec4 ambient, diffuse, specular;
+  */
+  pj_location = glGetUniformLocation(program, "projection");
+  mv_location = glGetUniformLocation(program, "model_view");
+  tr_location = glGetUniformLocation(program, "transformation");
 
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -152,6 +157,7 @@ void modelPhysics(GLfloat delta_sec)
 
 void genModelShadows()
 {
+  
 }
 
 void idle_func()
@@ -218,13 +224,6 @@ void keyboard(unsigned char key, int mousex, int mousey)
 
 void genModels()
 {
-  /* identity(&sphere1_tr); */
-  /* identity(&sphere2_tr); */
-  /* identity(&sphere3_tr); */
-  /* identity(&sphere4_tr); */
-  /* identity(&sphere5_tr); */
-  /* identity(&light_sphere_tr); */
-
   Model sphere1;
   Model sphere2;
   Model sphere3;
@@ -279,14 +278,20 @@ void genModels()
   setColor(&sphere4,&yellow);
   setColor(&sphere5,&purple);
 
-  model_list = malloc(sizeof(Model)*6);
+  num_models = 11;
+  model_list = malloc(sizeof(Model)*num_models);
   model_list[0] = ground_cube;
   model_list[1] = sphere1;
   model_list[2] = sphere2;
   model_list[3] = sphere3;
   model_list[4] = sphere4;
   model_list[5] = sphere5;
-  num_models = 6;
+  //shadows
+  model_list[6] = sphere1;
+  model_list[7] = sphere2;
+  model_list[8] = sphere3;
+  model_list[9] = sphere4;
+  model_list[10] = sphere5;
   // init tranformations
   for (int i = 0; i < num_models; i++)
     {
@@ -296,6 +301,7 @@ void genModels()
 
 int main(int argc, char **argv)
 {
+  if (0){printf("0 is true da ding");}
   genModels();
   flattenModelList(&model_list,&vertices,&colors,&num_vertices,&num_models);
 
