@@ -12,17 +12,6 @@ typedef struct Model
   Mat4 transform;
 } Model;
 
-typedef struct ShaderModel //Where color is defined in the shader not the application
-{
-  Vec4* vertices;
-  int num_vertices;
-  Vec4 ambient;
-  Vec4 specular;
-  Vec4 difuse;
-  float shine;
-} ShaderModel;
-
-
 void applyModelTranformation(Model* model, const Mat4* const mat, const int* const num_vertices);
 void translateModelVec4(Model* model, const int* const num_vertices, const Vec4* const vec);
 void rotateYOriginModel(Model* model, const int* const num_vertices, int degree);

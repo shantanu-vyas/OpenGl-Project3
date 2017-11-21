@@ -27,7 +27,7 @@
 
 #include "initShader.h"
 #include "VecLib.h"
-#include "Model.h"
+#include "ShaderModel.h"
 #include "GLToolkit.h"
 #include "Balls.h"
 
@@ -36,9 +36,22 @@
 
 clock_t global_clock_prev; // last time rendered/physics ticked
 
+
+/* VSHADER INPUTS */
 GLuint pj_location;
 GLuint mv_location;
 GLuint tr_location;
+
+GLuint ambient_location;
+GLuint diffuse_location;
+GLuint specular_location;
+GLuint shininess_location;
+
+GLuint light_pos_location;
+GLuint atten_const_location;
+GLuint atten_linear_location;
+GLuint atten_quad_location;
+/* VSHADER INPUTS END */
 
 const Vec4 red =    {1.f, 0.f, 0.f, 1.f};
 const Vec4 green =  {0.f, 1.f, 0.f, 1.f};
@@ -47,6 +60,8 @@ const Vec4 cgray =  {.3f, .3f, .3f, 1.f};
 const Vec4 yellow = {1.f, 1.f, 0.f, 1.f};
 const Vec4 purple = {1.f, 0.f, 1.f, 1.f};
 const Vec4 cyan =   {0.f, 1.f, 1.f, 1.f};
+const Vec4 black =   {0.f, .0f, .0f, 1.f};
+const Vec4 white =   {1.f, 1.f, 1.f, 1.f};
 
 
 Mat4 pj_matrix =
@@ -60,7 +75,7 @@ Mat4 mv_matrix =
    {0.f, 0.f, 1.f, 0.f},
    {0.f, 0.f, 0.f, 1.f}};
 
-GLfloat theta = 0.f;
+GLfloat theta = M_PI/32.f;
 GLfloat phi = 0.f;
 
 GLfloat eye_radius = 20.f;
@@ -69,13 +84,18 @@ Vec4 eye = {0.f, 30.f, 0.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
+GLfloat atten_const = .1f;
+GLfloat atten_linear = .1f;
+GLfloat atten_quad = .1f;
 Vec4 lightPos = {0.f, 2.f, 0.f, 1.f};
 
 Vec4* vertices;
-Vec4* colors;
+//Vec4* colors;
 int num_vertices;
 
-Model* model_list;
+ShaderModel * model_list;
+GLfloat * model_theta_list;
+GLfloat * model_offset_list;
 int num_models;
 
 
@@ -93,20 +113,13 @@ void init(void)
   GLuint buffer;
   glGenBuffers(1, &buffer);
   glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  glBufferData(GL_ARRAY_BUFFER, size + size, NULL, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 2 * size, NULL, GL_STATIC_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, size, vertices);
-  glBufferSubData(GL_ARRAY_BUFFER, size, size, colors);
+  glBufferSubData(GL_ARRAY_BUFFER, size, size, vertices);
+//  glBufferSubData(GL_ARRAY_BUFFER, size, size, colors);
 
-  GLuint vPosition = glGetAttribLocation(program, "vPosition");
-  glEnableVertexAttribArray(vPosition);
-  glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), BUFFER_OFFSET(0));
+/* VSHADER VARIABLES
 
-  GLuint vColor = glGetAttribLocation(program, "vColor");
-  glEnableVertexAttribArray(vColor);
-  glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *) size);
-  /*
-  TODO yoink and use these things:
-  
   in vec4 vPosition;
   in vec4 vNormal;
   in int isShadow;
@@ -115,12 +128,32 @@ void init(void)
   uniform mat4 model_view, projection, transformation;
   uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
   uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
-  vec4 ambient, diffuse, specular;
-  */
+ */
+  GLuint vPosition = glGetAttribLocation(program, "vPosition");
+  glEnableVertexAttribArray(vPosition);
+  glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), BUFFER_OFFSET(0));
+ 
+  GLuint vNormal = glGetAttribLocation(program, "vNormal");
+  glEnableVertexAttribArray(vNormal);
+  glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_TRUE, sizeof(Vec4), (GLvoid *) size);
+
+  GLuint isShadow = glGetAttribLocation(program, "isShadow");
+
   pj_location = glGetUniformLocation(program, "projection");
   mv_location = glGetUniformLocation(program, "model_view");
   tr_location = glGetUniformLocation(program, "transformation");
-
+  
+  ambient_location = glGetUniformLocation(program, "AmbientProduct");
+  diffuse_location = glGetUniformLocation(program, "DiffuseProduct");
+  specular_location = glGetUniformLocation(program, "SpecularProduct");
+  shininess_location = glGetUniformLocation(program, "shininess");
+  
+  light_pos_location = glGetUniformLocation(program, "LightPosition");
+  
+  atten_const_location = glGetUniformLocation(program, "attenuation_constant");
+  atten_linear_location = glGetUniformLocation(program, "attenuation_linear");
+  atten_quad_location = glGetUniformLocation(program, "attenuation_quadratic");
+  
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.f, 0.f, 0.f, 1.f);
   glDepthRange(1,0);
@@ -130,27 +163,44 @@ void display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glUniformMatrix4fv(pj_location, 1, GL_FALSE, (GLfloat *) &pj_matrix);
   glUniformMatrix4fv(mv_location, 1, GL_FALSE, (GLfloat *) &mv_matrix);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  
+  glUniform1fv(atten_const_location, 1, (GLfloat *) &atten_const);
+  glUniform1fv(atten_linear_location, 1, (GLfloat *) &atten_linear);
+  glUniform1fv(atten_quad_location, 1, (GLfloat *) &atten_quad);
 
-
+  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
+  
   int vc = 0;
+  Vec4 vNorm;
   for (int i = 0; i < num_models; i++)
-    {
+    { 
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
+      glUniform4fv(ambient_location, 1, (GLfloat *) &model_list[i].ambient);
+      glUniform4fv(diffuse_location, 1, (GLfloat *) &model_list[i].diffuse);
+      glUniform4fv(specular_location, 1, (GLfloat *) &model_list[i].specular);
+      glUniform1fv(shininess_location, 1, (GLfloat *) &model_list[i].shine);
       glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
       vc+=model_list[i].num_vertices;
     }
+
+  eye.x = eye_radius * sinf(theta) * cosf(phi);
+  eye.z = eye_radius * sinf(theta) * sinf(phi);
+  eye.y = eye_radius * cosf(theta);
+  genLookAt(&mv_matrix,&eye,&at,&up);
 
   glutSwapBuffers();
 }
 
 void modelPhysics(GLfloat delta_sec)
 { 
-  // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0
-  for (int i = 0; i < num_models; i++){
+  // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0. Light sphere excluded
+  for (int i = 0; i < num_models-1; i++){
     rotateY(&model_list[i].transform, ((GLfloat) i) * delta_sec);
+//GLfloat * model_theta_list;
+//GLfloat * model_offset_list;
   }
 
 }
@@ -167,12 +217,10 @@ void idle_func()
   GLfloat delta_sec = (((GLfloat)now - (GLfloat)global_clock_prev) / (GLfloat)CLOCKS_PER_SEC);
   int render = 0;
 
-  while (delta_sec >= 1.f / FPS) {
+  if (delta_sec >= 1.f / FPS) {
     render = 1; 
     modelPhysics(delta_sec);
     genModelShadows();
-
-    delta_sec--;
   }
   if (render){
     glutPostRedisplay();
@@ -185,52 +233,35 @@ void idle_func()
 
 void keyboard(unsigned char key, int mousex, int mousey)
 {
-  if(key == 'q')
-    exit(0);
-  if (key == '1')
-    {
-      theta+=M_PI/32.f;
-    }
-  if (key == '2')
-    {
-      theta-=M_PI/32.f;
-    }
-  if (key == '3')
-    {
-      phi+=M_PI/32.f;
-      //printf("%f\n",phi);
-    }
-  if(key == '4')
-    {
-      phi-=M_PI/32.f;
-    }
-
+  if (key == 'q')  exit(0);
+  if (key == '1') theta+=M_PI/32.f;
+  if (key == '2') theta-=M_PI/32.f;
+  if (key == '3') phi+=M_PI/32.f;
+  if (key == '4') phi-=M_PI/32.f;
+  if (key == 'z') atten_const += .1f;
+  if (key == 'Z') atten_const -= .1f;
+  if (key == 'x') atten_linear += .1f;
+  if (key == 'X') atten_linear -= .1f;
+  if (key == 'c') atten_quad += .1f;
+  if (key == 'C') atten_quad -= .1f;
   /* printf("sin theta %f\n",sin(theta)); */
   /* printf("cos phi %f\n",cos(phi)); */
   /* printf("cos theta %f\n",cos(theta)); */
   /* printf("theta %f\n",theta); */
   /* printf("phi %f\n",phi); */
 
-  eye.x = eye_radius * sinf(theta) * cosf(phi);
-  eye.z = eye_radius * sinf(theta) * sinf(phi);
-  eye.y = eye_radius * cosf(theta);
-
-
-  printVector(&eye);
-  genLookAt(&mv_matrix,&eye,&at,&up);
-
-  glutPostRedisplay();
+  /* printVector(&eye); */
 }
 
 void genModels()
 {
-  Model sphere1;
-  Model sphere2;
-  Model sphere3;
-  Model sphere4;
-  Model sphere5;
-  Model light_sphere;
-  Model ground_cube;
+  ShaderModel sphere1;
+  ShaderModel sphere2;
+  ShaderModel sphere3;
+  ShaderModel sphere4;
+  ShaderModel sphere5;
+  ShaderModel light_sphere;
+  ShaderModel ground_cube;
 
   makeCube(&ground_cube);
   scaleYModel(&ground_cube,&ground_cube.num_vertices,.001f);
@@ -261,8 +292,18 @@ void genModels()
   makeSphere(&sphere5);
   Vec4 trans5 = {8.f, 1.f, 0.f, 0.f};
   translateModelVec4(&sphere5, &sphere5.num_vertices, &trans5);
-
-  setColor(&ground_cube,&cgray);
+  
+  GLfloat light_shine = 1000.f;
+  makeSphere(&light_sphere);
+  scaleXModel(&light_sphere,&light_sphere.num_vertices,.5f);
+  scaleYModel(&light_sphere,&light_sphere.num_vertices,.5f);
+  scaleZModel(&light_sphere,&light_sphere.num_vertices,.5f);
+  Vec4 trans6 = {1.f, 5.f, 1.f, 0.f};
+  translateModelVec4(&light_sphere, &light_sphere.num_vertices, &trans6);
+  setColor(&light_sphere,&white,&white, &white, &light_shine);
+  
+  GLfloat ground_shine = 1000.f;
+  setColor(&ground_cube,&cgray,&cgray,&cgray, &ground_shine);
   /* for (int i = 0; i < 36; i++) */
   /*   { */
   /*     GLfloat x = 0 + rand() % (1+1); */
@@ -271,27 +312,29 @@ void genModels()
   /*     Vec4 temp = {x,y,z,1}; */
   /*     ground_cube.colors[i] = temp; */
   /*   } */
-
+/*
   setColor(&sphere1,&red);
   setColor(&sphere2,&green);
   setColor(&sphere3,&blue);
   setColor(&sphere4,&yellow);
   setColor(&sphere5,&purple);
-
-  num_models = 11;
-  model_list = malloc(sizeof(Model)*num_models);
+*/
+  num_models = 7;
+  
+  model_list = malloc(sizeof(ShaderModel)*num_models);
+  model_theta_list = malloc(sizeof(GLfloat)* num_models);
+  model_offset_list = malloc(sizeof(GLfloat)* num_models);
+  
+  // define offsets
+//  model_offset_list[0] = 
+  
   model_list[0] = ground_cube;
   model_list[1] = sphere1;
   model_list[2] = sphere2;
   model_list[3] = sphere3;
   model_list[4] = sphere4;
   model_list[5] = sphere5;
-  //shadows
-  model_list[6] = sphere1;
-  model_list[7] = sphere2;
-  model_list[8] = sphere3;
-  model_list[9] = sphere4;
-  model_list[10] = sphere5;
+  model_list[6] = light_sphere;
   // init tranformations
   for (int i = 0; i < num_models; i++)
     {
@@ -301,9 +344,8 @@ void genModels()
 
 int main(int argc, char **argv)
 {
-  if (0){printf("0 is true da ding");}
   genModels();
-  flattenModelList(&model_list,&vertices,&colors,&num_vertices,&num_models);
+  flattenModelList(&model_list,&vertices,&num_vertices,&num_models);
 
   eye.x = eye_radius * sin(theta) * cos(phi);
   eye.y = eye_radius * sin(theta) * sin(phi);
