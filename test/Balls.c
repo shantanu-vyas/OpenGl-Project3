@@ -39,6 +39,8 @@ clock_t global_clock_prev; // last time rendered/physics ticked
 GLuint pj_location;
 GLuint mv_location;
 GLuint tr_location;
+GLuint is_shadow;
+GLuint light_position;
 
 const Vec4 red =    {1.f, 0.f, 0.f, 1.f};
 const Vec4 green =  {0.f, 1.f, 0.f, 1.f};
@@ -60,6 +62,8 @@ Mat4 mv_matrix =
    {0.f, 0.f, 1.f, 0.f},
    {0.f, 0.f, 0.f, 1.f}};
 
+int isShadow = 0;
+
 GLfloat theta = 0.f;
 GLfloat phi = 0.f;
 
@@ -69,7 +73,7 @@ Vec4 eye = {0.f, 30.f, 0.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
-Vec4 lightPos = {0.f, 2.f, 0.f, 1.f};
+Vec4 lightPos = {100.f, -10.f, 0.f, 1.f};
 
 Vec4* vertices;
 Vec4* colors;
@@ -81,7 +85,7 @@ int num_models;
 
 void init(void)
 {
-  int size = sizeof(Vec4)*num_vertices;
+  int size = sizeof(Vec4)*num_vertices*2-36;
 
   GLuint program = initShader("shaders/vshader.glsl", "shaders/fshader.glsl");
   glUseProgram(program);
@@ -105,21 +109,23 @@ void init(void)
   glEnableVertexAttribArray(vColor);
   glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid *) size);
   /*
-  TODO yoink and use these things:
-  
-  in vec4 vPosition;
-  in vec4 vNormal;
-  in int isShadow;
-  out vec4 color;
+    TODO yoink and use these things:
 
-  uniform mat4 model_view, projection, transformation;
-  uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
-  uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
-  vec4 ambient, diffuse, specular;
+    in vec4 vPosition;
+    in vec4 vNormal;
+    in int isShadow;
+    out vec4 color;
+
+    uniform mat4 model_view, projection, transformation;
+    uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
+    uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
+    vec4 ambient, diffuse, specular;
   */
   pj_location = glGetUniformLocation(program, "projection");
   mv_location = glGetUniformLocation(program, "model_view");
   tr_location = glGetUniformLocation(program, "transformation");
+  is_shadow = glGetUniformLocation(program, "isShadow");
+  //light_position = glGetUniformLocation(program, "vLight");
 
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -130,24 +136,52 @@ void display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  
+  glRasterPos3f(.6,-.9,0);
+  char* s = "FPS is XX.XX";
+  void * font = GLUT_BITMAP_9_BY_15;
+  for (int i = 0; i < 11; i++)
+    {
+      char c = s[i];
+      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c);
+    }
+
+
   glUniformMatrix4fv(pj_location, 1, GL_FALSE, (GLfloat *) &pj_matrix);
   glUniformMatrix4fv(mv_location, 1, GL_FALSE, (GLfloat *) &mv_matrix);
+  glUniformMatrix4fv(light_position, 1, GL_FALSE, (GLfloat *) &lightPos);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 
   int vc = 0;
   for (int i = 0; i < num_models; i++)
     {
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
+      is_shadow = 0;
+      glUniform1i(light_position,is_shadow);
       glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
       vc+=model_list[i].num_vertices;
     }
+
+  vc = 0;
+  for (int i = 0; i < num_models; i++)
+    {
+      glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
+      is_shadow = 1;
+      glUniform1i(light_position,is_shadow);
+      if (i != 0) //need to still do addition but no draw shadow
+        {
+          glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
+        }
+      vc+=model_list[i].num_vertices;
+    }
+
+
 
   glutSwapBuffers();
 }
 
 void modelPhysics(GLfloat delta_sec)
-{ 
+{
   // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0
   for (int i = 0; i < num_models; i++){
     rotateY(&model_list[i].transform, ((GLfloat) i) * delta_sec);
@@ -157,7 +191,7 @@ void modelPhysics(GLfloat delta_sec)
 
 void genModelShadows()
 {
-  
+
 }
 
 void idle_func()
@@ -168,7 +202,7 @@ void idle_func()
   int render = 0;
 
   while (delta_sec >= 1.f / FPS) {
-    render = 1; 
+    render = 1;
     modelPhysics(delta_sec);
     genModelShadows();
 
@@ -177,7 +211,7 @@ void idle_func()
   if (render){
     glutPostRedisplay();
     global_clock_prev = now; // only changes if physics/camera ticked
-  } 
+  }
 
 
 }
@@ -278,7 +312,7 @@ void genModels()
   setColor(&sphere4,&yellow);
   setColor(&sphere5,&purple);
 
-  num_models = 11;
+  num_models = 6;
   model_list = malloc(sizeof(Model)*num_models);
   model_list[0] = ground_cube;
   model_list[1] = sphere1;
@@ -287,11 +321,11 @@ void genModels()
   model_list[4] = sphere4;
   model_list[5] = sphere5;
   //shadows
-  model_list[6] = sphere1;
-  model_list[7] = sphere2;
-  model_list[8] = sphere3;
-  model_list[9] = sphere4;
-  model_list[10] = sphere5;
+  /* model_list[6] = sphere1; */
+  /* model_list[7] = sphere2; */
+  /* model_list[8] = sphere3; */
+  /* model_list[9] = sphere4; */
+  /* model_list[10] = sphere5; */
   // init tranformations
   for (int i = 0; i < num_models; i++)
     {
@@ -304,12 +338,13 @@ int main(int argc, char **argv)
   if (0){printf("0 is true da ding");}
   genModels();
   flattenModelList(&model_list,&vertices,&colors,&num_vertices,&num_models);
+  num_vertices = num_vertices*2-36;
 
   eye.x = eye_radius * sin(theta) * cos(phi);
   eye.y = eye_radius * sin(theta) * sin(phi);
   eye.z = eye_radius * cos(theta);
 
-  genPerspective(&pj_matrix, 30.f , 1.f, .01f, 10.f);
+  genPerspective(&pj_matrix, 30.f , 1.f, .01f, 100.f);
   genLookAt(&mv_matrix,&eye,&at,&up);
 
 
