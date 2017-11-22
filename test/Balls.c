@@ -259,6 +259,8 @@ void keyboard(unsigned char key, int mousex, int mousey)
   if (key == '2') theta-=M_PI/32.f;
   if (key == '3') phi+=M_PI/32.f;
   if (key == '4') phi-=M_PI/32.f;
+  if (key == '-') eye_radius++;
+  if (key == '=') eye_radius--;
   if (key == 'z') atten_const += .1f;
   if (key == 'Z') atten_const -= .1f;
   if (key == 'x') atten_linear += .1f;
