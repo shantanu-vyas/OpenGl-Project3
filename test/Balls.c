@@ -202,7 +202,7 @@ void display(void)
       vc+=model_list[i].num_vertices;
     }
 
-
+  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
   vc = 36; //dont draw shadow for the ground cube
   for (int i = 1; i < num_models-1; i++)
     {
