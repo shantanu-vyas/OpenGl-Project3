@@ -41,6 +41,8 @@ clock_t global_clock_prev; // last time rendered/physics ticked
 GLuint pj_location;
 GLuint mv_location;
 GLuint tr_location;
+GLuint is_shadow;
+
 
 GLuint ambient_location;
 GLuint diffuse_location;
@@ -87,7 +89,7 @@ Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 GLfloat atten_const = .1f;
 GLfloat atten_linear = .1f;
 GLfloat atten_quad = .1f;
-Vec4 lightPos = {0.f, 2.f, 0.f, 1.f};
+Vec4 lightPos = {2.f, 0.f, 0.f, 1.f};
 
 Vec4* vertices;
 //Vec4* colors;
@@ -101,7 +103,7 @@ int num_models;
 
 void init(void)
 {
-  int size = sizeof(Vec4)*num_vertices;
+  int size = 2*sizeof(Vec4)*num_vertices; //need at least double because shadows
 
   GLuint program = initShader("shaders/vshader.glsl", "shaders/fshader.glsl");
   glUseProgram(program);
@@ -116,23 +118,23 @@ void init(void)
   glBufferData(GL_ARRAY_BUFFER, 2 * size, NULL, GL_STATIC_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, size, vertices);
   glBufferSubData(GL_ARRAY_BUFFER, size, size, vertices);
-//  glBufferSubData(GL_ARRAY_BUFFER, size, size, colors);
+  //  glBufferSubData(GL_ARRAY_BUFFER, size, size, colors);
 
-/* VSHADER VARIABLES
+  /* VSHADER VARIABLES
 
-  in vec4 vPosition;
-  in vec4 vNormal;
-  in int isShadow;
-  out vec4 color;
+     in vec4 vPosition;
+     in vec4 vNormal;
+     in int isShadow;
+     out vec4 color;
 
-  uniform mat4 model_view, projection, transformation;
-  uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
-  uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
- */
+     uniform mat4 model_view, projection, transformation;
+     uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
+     uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
+  */
   GLuint vPosition = glGetAttribLocation(program, "vPosition");
   glEnableVertexAttribArray(vPosition);
   glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), BUFFER_OFFSET(0));
- 
+
   GLuint vNormal = glGetAttribLocation(program, "vNormal");
   glEnableVertexAttribArray(vNormal);
   glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_TRUE, sizeof(Vec4), (GLvoid *) size);
@@ -142,18 +144,18 @@ void init(void)
   pj_location = glGetUniformLocation(program, "projection");
   mv_location = glGetUniformLocation(program, "model_view");
   tr_location = glGetUniformLocation(program, "transformation");
-  
+
   ambient_location = glGetUniformLocation(program, "AmbientProduct");
   diffuse_location = glGetUniformLocation(program, "DiffuseProduct");
   specular_location = glGetUniformLocation(program, "SpecularProduct");
   shininess_location = glGetUniformLocation(program, "shininess");
-  
+
   light_pos_location = glGetUniformLocation(program, "LightPosition");
-  
+
   atten_const_location = glGetUniformLocation(program, "attenuation_constant");
   atten_linear_location = glGetUniformLocation(program, "attenuation_linear");
   atten_quad_location = glGetUniformLocation(program, "attenuation_quadratic");
-  
+
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.f, 0.f, 0.f, 1.f);
   glDepthRange(1,0);
@@ -163,25 +165,44 @@ void display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glRasterPos3f(.6,-.9,0);
+  char* s = "FPS is XX.XX";
+  void * font = GLUT_BITMAP_9_BY_15;
+  for (int i = 0; i < 11; i++)
+    {
+      char c = s[i];
+      glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c);
+    } 
+
+
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glUniformMatrix4fv(pj_location, 1, GL_FALSE, (GLfloat *) &pj_matrix);
   glUniformMatrix4fv(mv_location, 1, GL_FALSE, (GLfloat *) &mv_matrix);
-  
+
   glUniform1fv(atten_const_location, 1, (GLfloat *) &atten_const);
   glUniform1fv(atten_linear_location, 1, (GLfloat *) &atten_linear);
   glUniform1fv(atten_quad_location, 1, (GLfloat *) &atten_quad);
 
   glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
-  
+
   int vc = 0;
-  Vec4 vNorm;
   for (int i = 0; i < num_models; i++)
-    { 
+    {
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
       glUniform4fv(ambient_location, 1, (GLfloat *) &model_list[i].ambient);
       glUniform4fv(diffuse_location, 1, (GLfloat *) &model_list[i].diffuse);
       glUniform4fv(specular_location, 1, (GLfloat *) &model_list[i].specular);
       glUniform1fv(shininess_location, 1, (GLfloat *) &model_list[i].shine);
+      glUniform1i(is_shadow,0);
+      glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
+      vc+=model_list[i].num_vertices;
+    }
+
+  vc = 36; //dont draw shadow for the ground cube
+  for (int i = 1; i < num_models-1; i++)
+    {
+      glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
+      glUniform1i(is_shadow,1);
       glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
       vc+=model_list[i].num_vertices;
     }
@@ -195,19 +216,19 @@ void display(void)
 }
 
 void modelPhysics(GLfloat delta_sec)
-{ 
+{
   // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0. Light sphere excluded
   for (int i = 0; i < num_models-1; i++){
     rotateY(&model_list[i].transform, ((GLfloat) i) * delta_sec);
-//GLfloat * model_theta_list;
-//GLfloat * model_offset_list;
+    //GLfloat * model_theta_list;
+    //GLfloat * model_offset_list;
   }
 
 }
 
 void genModelShadows()
 {
-  
+
 }
 
 void idle_func()
@@ -218,14 +239,14 @@ void idle_func()
   int render = 0;
 
   if (delta_sec >= 1.f / FPS) {
-    render = 1; 
+    render = 1;
     modelPhysics(delta_sec);
     genModelShadows();
   }
   if (render){
     glutPostRedisplay();
     global_clock_prev = now; // only changes if physics/camera ticked
-  } 
+  }
 
 
 }
@@ -292,7 +313,7 @@ void genModels()
   makeSphere(&sphere5);
   Vec4 trans5 = {8.f, 1.f, 0.f, 0.f};
   translateModelVec4(&sphere5, &sphere5.num_vertices, &trans5);
-  
+
   GLfloat light_shine = 1000.f;
   makeSphere(&light_sphere);
   scaleXModel(&light_sphere,&light_sphere.num_vertices,.5f);
@@ -301,7 +322,7 @@ void genModels()
   Vec4 trans6 = {1.f, 5.f, 1.f, 0.f};
   translateModelVec4(&light_sphere, &light_sphere.num_vertices, &trans6);
   setColor(&light_sphere,&white,&white, &white, &light_shine);
-  
+
   GLfloat ground_shine = 1000.f;
   setColor(&ground_cube,&cgray,&cgray,&cgray, &ground_shine);
   /* for (int i = 0; i < 36; i++) */
@@ -312,22 +333,22 @@ void genModels()
   /*     Vec4 temp = {x,y,z,1}; */
   /*     ground_cube.colors[i] = temp; */
   /*   } */
-/*
-  setColor(&sphere1,&red);
-  setColor(&sphere2,&green);
-  setColor(&sphere3,&blue);
-  setColor(&sphere4,&yellow);
-  setColor(&sphere5,&purple);
-*/
+  /*
+    setColor(&sphere1,&red);
+    setColor(&sphere2,&green);
+    setColor(&sphere3,&blue);
+    setColor(&sphere4,&yellow);
+    setColor(&sphere5,&purple);
+  */
   num_models = 7;
-  
+
   model_list = malloc(sizeof(ShaderModel)*num_models);
   model_theta_list = malloc(sizeof(GLfloat)* num_models);
   model_offset_list = malloc(sizeof(GLfloat)* num_models);
-  
+
   // define offsets
-//  model_offset_list[0] = 
-  
+  //  model_offset_list[0] =
+
   model_list[0] = ground_cube;
   model_list[1] = sphere1;
   model_list[2] = sphere2;
