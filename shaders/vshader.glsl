@@ -14,9 +14,12 @@ void main()
 {
   if(isShadow == 0)
     {
+      vec4 light = LightPosition;
+      
       ambient = AmbientProduct;
       vec4 N = normalize(model_view * vNormal);
-      vec4 L_temp = model_view * (LightPosition - vPosition);
+      N*=-1;
+      vec4 L_temp = model_view * (light - vPosition);
       vec4 L = normalize(L_temp);
       diffuse = max(dot(L,N), 0.0) * DiffuseProduct;
       vec4 EyePoint = vec4(0.0, 0.0, 0.0, 1.0);

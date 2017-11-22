@@ -186,8 +186,7 @@ void display(void)
   glUniform1fv(atten_quad_location, 1, (GLfloat *) &atten_quad);
 
   //julian look at this
-  Vec4 negLight = {-1*lightPos.x,-1*lightPos.y,-1*lightPos.z,lightPos.w};
-  glUniform4fv(light_pos_location, 1, (GLfloat *) &negLight);
+  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
 
   int vc = 0;
   for (int i = 0; i < num_models; i++)
