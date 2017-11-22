@@ -3,7 +3,7 @@
   Application:
   1) Add 5 balls radius .5 all touching each other
   2) Animate balls to all move at different speeds around origin
-  3) Add small ball along +y for the light source
+  3) Add small all along +y for the light source
   4) Add plane for all balls to sit along
   5) Set specular ambient and diffuse for each ball
   6) Set keyboard bindings for moving eye about radius around the origin
@@ -89,7 +89,7 @@ Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 GLfloat atten_const = .1f;
 GLfloat atten_linear = .1f;
 GLfloat atten_quad = .1f;
-Vec4 lightPos = {0.f, 5.f, 0.f, 1.f};
+Vec4 lightPos = {5.f, 5.f, 0.f, 1.f};
 
 Vec4* vertices;
 //Vec4* colors;
@@ -187,7 +187,7 @@ void display(void)
 
   //julian look at this
   Vec4 negLight = {-1*lightPos.x,-1*lightPos.y,-1*lightPos.z,lightPos.w};
-  glUniform4fv(light_pos_location, 1, (GLfloat *) &negLight);
+  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
 
   int vc = 0;
   for (int i = 0; i < num_models; i++)
@@ -201,6 +201,7 @@ void display(void)
       glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
       vc+=model_list[i].num_vertices;
     }
+
 
   vc = 36; //dont draw shadow for the ground cube
   for (int i = 1; i < num_models-1; i++)
@@ -296,8 +297,8 @@ void genModels()
 
   makeCube(&ground_cube);
   scaleYModel(&ground_cube,&ground_cube.num_vertices,.001f);
-  scaleXModel(&ground_cube,&ground_cube.num_vertices,10.f);
-  scaleZModel(&ground_cube,&ground_cube.num_vertices,10.f);
+  scaleXModel(&ground_cube,&ground_cube.num_vertices,15.f);
+  scaleZModel(&ground_cube,&ground_cube.num_vertices,15.f);
   /* scaleYModel(&ground_cube,&ground_cube.num_vertices,.4); */
   /* scaleXModel(&ground_cube,&ground_cube.num_vertices,.4); */
   /* scaleZModel(&ground_cube,&ground_cube.num_vertices,.4); */

@@ -35,7 +35,7 @@ void main()
       color = vec4(0,.0,.0,1);
       vec4 pos =  transformation * vPosition;
       vec4 vLight = LightPosition;
-      vLight = vec4(0,30,0,0);
+
       pos.x = vLight.x - vLight.y*((vLight.x-pos.x)/(vLight.y-pos.y));
       pos.z = vLight.z - vLight.y*((vLight.z-pos.z)/(vLight.y-pos.y));
       pos.y = .1;
