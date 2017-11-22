@@ -89,7 +89,7 @@ Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 GLfloat atten_const = .1f;
 GLfloat atten_linear = .1f;
 GLfloat atten_quad = .1f;
-Vec4 lightPos = {2.f, 0.f, 0.f, 1.f};
+Vec4 lightPos = {0.f, 5.f, 0.f, 1.f};
 
 Vec4* vertices;
 //Vec4* colors;
@@ -185,7 +185,9 @@ void display(void)
   glUniform1fv(atten_linear_location, 1, (GLfloat *) &atten_linear);
   glUniform1fv(atten_quad_location, 1, (GLfloat *) &atten_quad);
 
-  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
+  //julian look at this
+  Vec4 negLight = {-1*lightPos.x,-1*lightPos.y,-1*lightPos.z,lightPos.w};
+  glUniform4fv(light_pos_location, 1, (GLfloat *) &negLight);
 
   int vc = 0;
   for (int i = 0; i < num_models; i++)
@@ -221,16 +223,15 @@ void modelPhysics(GLfloat delta_sec)
 {
   // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0. Light sphere excluded
   for (int i = 1; i < num_models-1; i++){
-
     /*calculate translation using polar coords */
     model_list[i].transform.w.x = 2*(i-1)*cosf(ball_rot*i);
     model_list[i].transform.w.z = 2*(i-1)*sinf(ball_rot*i);
     model_list[i].transform.w.y = 1;
-        
     ball_rot+=.005;
-
   }
-
+  model_list[num_models-1].transform.w.x = lightPos.x;
+  model_list[num_models-1].transform.w.y = lightPos.y;
+  model_list[num_models-1].transform.w.z = lightPos.z;
 }
 
 void genModelShadows()
@@ -329,7 +330,7 @@ void genModels()
   scaleYModel(&light_sphere,&light_sphere.num_vertices,.5f);
   scaleZModel(&light_sphere,&light_sphere.num_vertices,.5f);
   Vec4 trans6 = {1.f, 5.f, 1.f, 0.f};
-  translateModelVec4(&light_sphere, &light_sphere.num_vertices, &trans6);
+  //translateModelVec4(&light_sphere, &light_sphere.num_vertices, &trans6);
   setColor(&light_sphere,&white,&white, &white, &light_shine);
 
   GLfloat ground_shine = 1000.f;
