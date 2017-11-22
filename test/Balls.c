@@ -89,7 +89,7 @@ Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 GLfloat atten_const = .1f;
 GLfloat atten_linear = .1f;
 GLfloat atten_quad = .1f;
-Vec4 lightPos = {5.f, 5.f, 0.f, 1.f};
+Vec4 lightPos = {0.f, 3.f, 0.f, 1.f};
 
 Vec4* vertices;
 //Vec4* colors;
@@ -187,7 +187,7 @@ void display(void)
 
   //julian look at this
   Vec4 negLight = {-1*lightPos.x,-1*lightPos.y,-1*lightPos.z,lightPos.w};
-  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
+  glUniform4fv(light_pos_location, 1, (GLfloat *) &negLight);
 
   int vc = 0;
   for (int i = 0; i < num_models; i++)
