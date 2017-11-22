@@ -100,6 +100,8 @@ GLfloat * model_theta_list;
 GLfloat * model_offset_list;
 int num_models;
 
+float ball_rot;
+
 
 void init(void)
 {
@@ -218,10 +220,15 @@ void display(void)
 void modelPhysics(GLfloat delta_sec)
 {
   // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0. Light sphere excluded
-  for (int i = 0; i < num_models-1; i++){
-    rotateY(&model_list[i].transform, ((GLfloat) i) * delta_sec);
-    //GLfloat * model_theta_list;
-    //GLfloat * model_offset_list;
+  for (int i = 1; i < num_models-1; i++){
+
+    /*calculate translation using polar coords */
+    model_list[i].transform.w.x = 2*(i-1)*cosf(ball_rot*i);
+    model_list[i].transform.w.z = 2*(i-1)*sinf(ball_rot*i);
+    model_list[i].transform.w.y = 1;
+        
+    ball_rot+=.005;
+
   }
 
 }
@@ -298,23 +305,23 @@ void genModels()
   /*change these to spheres after getting julians sphere code */
   makeSphere(&sphere1);
   Vec4 trans1 = {0.f , 1.f, 0.f, 0.f};
-  translateModelVec4(&sphere1, &sphere1.num_vertices, &trans1);
+  //  translateModelVec4(&sphere1, &sphere1.num_vertices, &trans1);
 
   makeSphere(&sphere2);
   Vec4 trans2 = {2.f, 1.f, 0.f, 0.f};
-  translateModelVec4(&sphere2, &sphere2.num_vertices, &trans2);
+  //translateModelVec4(&sphere2, &sphere2.num_vertices, &trans2);
 
   makeSphere(&sphere3);
   Vec4 trans3 = {4.f, 1.f, 0.f, 0.f};
-  translateModelVec4(&sphere3, &sphere3.num_vertices, &trans3);
+  //translateModelVec4(&sphere3, &sphere3.num_vertices, &trans3);
 
   makeSphere(&sphere4);
   Vec4 trans4 = {6.f, 1.f, 0.f, 0.f};
-  translateModelVec4(&sphere4, &sphere4.num_vertices, &trans4);
+  //translateModelVec4(&sphere4, &sphere4.num_vertices, &trans4);
 
   makeSphere(&sphere5);
   Vec4 trans5 = {8.f, 1.f, 0.f, 0.f};
-  translateModelVec4(&sphere5, &sphere5.num_vertices, &trans5);
+  //translateModelVec4(&sphere5, &sphere5.num_vertices, &trans5);
 
   GLfloat light_shine = 1000.f;
   makeSphere(&light_sphere);
