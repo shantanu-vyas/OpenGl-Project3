@@ -276,6 +276,13 @@ void keyboard(unsigned char key, int mousex, int mousey)
   if (key == 'X') atten_linear -= .1f;
   if (key == 'c') atten_quad += .1f;
   if (key == 'C') atten_quad -= .1f;
+  if (key == 'a') lightPos.x++;
+  if (key == 's') lightPos.x--;
+  if (key == 'd') lightPos.y++;
+  if (key == 'f') lightPos.y--;
+  if (key == 'g') lightPos.z++;
+  if (key == 'h') lightPos.z--;
+
   /* printf("sin theta %f\n",sin(theta)); */
   /* printf("cos phi %f\n",cos(phi)); */
   /* printf("cos theta %f\n",cos(theta)); */
