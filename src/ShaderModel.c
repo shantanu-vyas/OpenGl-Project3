@@ -109,8 +109,8 @@ void makeCube(ShaderModel* cube, const Vec4* const ambient, const Vec4* const sp
 
 void makeSphere(ShaderModel* sphere, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
 {
-  sphere->vertices = malloc(sizeof(Vec4)*1140);
-  sphere->num_vertices = 1140;
+  sphere->vertices = malloc(sizeof(Vec4)*1140*100);
+  sphere->num_vertices = 1140*16;
   sphere->ambient = *ambient;
   sphere->specular = *specular;
   sphere->diffuse = *diffuse;
@@ -121,11 +121,11 @@ void makeSphere(ShaderModel* sphere, const Vec4* const ambient, const Vec4* cons
   Vec4 offset = (Vec4) { -0.5f, 0.25f, 0.0f, 1.0f }; // sphere location is (−0.5, 0.25, 0.0)
   //vec4 offset = (vec4) { 0.f, 0.f, 0.0f, 0.0f };
   int k = 0;
-  for (float phi = -90.f; phi <= 90.f; phi += 20.f) {
+  for (float phi = -90.f; phi <= 90.f; phi += 5.f) {
     float phir = phi*DegreesToRadians;
     float phir10 = (phi + 10.f)*DegreesToRadians;
     float phir20 = (phi + 20.f)*DegreesToRadians;
-    for (float theta = -180.f; theta <= 180.f; theta += 20.f) {
+    for (float theta = -180.f; theta <= 180.f; theta += 5.f) {
       float thetar = theta*DegreesToRadians;
       float thetar_prev = (theta - 20.f)*DegreesToRadians;
       temp.x = sinf(thetar)*cosf(phir);
