@@ -92,14 +92,14 @@ void deepCopyModel(ShaderModel* ret, const ShaderModel* const model, const int* 
     }
 
 }
-void makeCube(ShaderModel* cube)
+void makeCube(ShaderModel* cube, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
 {
   cube->vertices = malloc(36*sizeof(Vec4));
   cube->num_vertices = 36;
-  cube->ambient = (Vec4){0.1f, 0.1f, 0.1f, 1.f};
-  cube->specular = (Vec4){1.f, 1.f, 1.f, 1.f};
-  cube->diffuse = (Vec4){0.5f, 0.5f, 0.5f, 1.f};
-  cube->shine = 10;
+  cube->ambient = *ambient;
+  cube->specular = *specular;
+  cube->diffuse = *diffuse;
+  cube->shine = *shine;
   for (int i = 0; i < 36; i++)
     {
       cube->vertices[i] = cube_vertices[i];
@@ -107,14 +107,14 @@ void makeCube(ShaderModel* cube)
   cube->num_vertices = 36;
 }
 
-void makeSphere(ShaderModel* sphere)
+void makeSphere(ShaderModel* sphere, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
 {
   sphere->vertices = malloc(sizeof(Vec4)*1140);
   sphere->num_vertices = 1140;
-  sphere->ambient = (Vec4){0.1f, 0.1f, 0.1f, 1.f};
-  sphere->specular = (Vec4){1.f, 1.f, 1.f, 1.f};
-  sphere->diffuse = (Vec4){0.5f, 0.5f, 0.5f, 1.f};
-  sphere->shine = 10;
+  sphere->ambient = *ambient;
+  sphere->specular = *specular;
+  sphere->diffuse = *diffuse;
+  sphere->shine = *shine;
   // returns number of vertices it created. I think its 1140
   float DegreesToRadians = (float)M_PI / 180.f;
   Vec4 temp;

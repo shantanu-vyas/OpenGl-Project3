@@ -26,8 +26,8 @@ void scaleYModel(ShaderModel* model, const int* const num_vertices, float factor
 void scaleZModel(ShaderModel* model, const int* const num_vertices, float factor);
 void deepCopyModel(ShaderModel* ret, const ShaderModel* const model, const int* const num_vertices);
 void flattenModelList(ShaderModel** list, Vec4** v, int* nv, int* nm);
-void makeCube(ShaderModel* cube);
-void makeSphere(ShaderModel* sphere);
+void makeCube(ShaderModel* cube, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine);
+void makeSphere(ShaderModel* sphere, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine);
 void setColor(ShaderModel* model, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine);
 
 

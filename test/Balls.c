@@ -56,12 +56,18 @@ GLuint atten_quad_location;
 /* VSHADER INPUTS END */
 
 const Vec4 red =    {1.f, 0.f, 0.f, 1.f};
+const Vec4 darkred = {.5f, 0.f, 0.f, 1.f};
 const Vec4 green =  {0.f, 1.f, 0.f, 1.f};
+const Vec4 darkgreen =  {0.f, 0.5f, 0.f, 1.f};
 const Vec4 blue =   {0.f, 0.f, 1.f, 1.f};
+const Vec4 darkblue =   {0.f, 0.f, .5f, 1.f};
 const Vec4 cgray =  {.3f, .3f, .3f, 1.f};
 const Vec4 yellow = {1.f, 1.f, 0.f, 1.f};
+const Vec4 darkyellow = {.5f, .5f, 0.f, 1.f};
 const Vec4 purple = {1.f, 0.f, 1.f, 1.f};
+const Vec4 darkpurple = {.5f, 0.f, .5f, 1.f};
 const Vec4 cyan =   {0.f, 1.f, 1.f, 1.f};
+const Vec4 darkcyan =   {0.f, .5f, .5f, 1.f};
 const Vec4 black =   {0.f, .0f, .0f, 1.f};
 const Vec4 white =   {1.f, 1.f, 1.f, 1.f};
 
@@ -86,9 +92,9 @@ Vec4 eye = {0.f, 30.f, 0.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
-GLfloat atten_const = .1f;
-GLfloat atten_linear = .1f;
-GLfloat atten_quad = .1f;
+GLfloat atten_const = -5.f;
+GLfloat atten_linear = 1.f;
+GLfloat atten_quad = 1.f;
 Vec4 lightPos = {0.f, 3.f, 0.f, 1.f};
 
 Vec4* vertices;
@@ -96,8 +102,6 @@ Vec4* vertices;
 int num_vertices;
 
 ShaderModel * model_list;
-GLfloat * model_theta_list;
-GLfloat * model_offset_list;
 int num_models;
 
 float ball_rot;
@@ -301,47 +305,44 @@ void genModels()
   ShaderModel light_sphere;
   ShaderModel ground_cube;
 
-  makeCube(&ground_cube);
+  GLfloat shine = .1f;
+
+  makeCube(&ground_cube,&darkgreen, &green, &green, &shine);
   scaleYModel(&ground_cube,&ground_cube.num_vertices,.001f);
   scaleXModel(&ground_cube,&ground_cube.num_vertices,15.f);
   scaleZModel(&ground_cube,&ground_cube.num_vertices,15.f);
-  /* scaleYModel(&ground_cube,&ground_cube.num_vertices,.4); */
-  /* scaleXModel(&ground_cube,&ground_cube.num_vertices,.4); */
-  /* scaleZModel(&ground_cube,&ground_cube.num_vertices,.4); */
-
 
   /*change these to spheres after getting julians sphere code */
-  makeSphere(&sphere1);
+  makeSphere(&sphere1, &black, &red, &darkred, &shine);
   Vec4 trans1 = {0.f , 1.f, 0.f, 0.f};
-  //  translateModelVec4(&sphere1, &sphere1.num_vertices, &trans1);
 
-  makeSphere(&sphere2);
+//  shine = .2f;
+
+  makeSphere(&sphere2, &black, &blue, &darkblue, &shine);
   Vec4 trans2 = {2.f, 1.f, 0.f, 0.f};
-  //translateModelVec4(&sphere2, &sphere2.num_vertices, &trans2);
 
-  makeSphere(&sphere3);
+//  shine = .4f;
+  
+  makeSphere(&sphere3, &black, &yellow, &darkyellow, &shine);
   Vec4 trans3 = {4.f, 1.f, 0.f, 0.f};
-  //translateModelVec4(&sphere3, &sphere3.num_vertices, &trans3);
 
-  makeSphere(&sphere4);
+//  shine = .8f;
+  
+  makeSphere(&sphere4, &black, &purple, &darkpurple, &shine);
   Vec4 trans4 = {6.f, 1.f, 0.f, 0.f};
-  //translateModelVec4(&sphere4, &sphere4.num_vertices, &trans4);
 
-  makeSphere(&sphere5);
+//  shine = 1.6f;
+  
+  makeSphere(&sphere5, &black, &cyan, &darkcyan, &shine);
   Vec4 trans5 = {8.f, 1.f, 0.f, 0.f};
-  //translateModelVec4(&sphere5, &sphere5.num_vertices, &trans5);
 
   GLfloat light_shine = 1000.f;
-  makeSphere(&light_sphere);
+  makeSphere(&light_sphere, &white, &white, &white, &light_shine);
   scaleXModel(&light_sphere,&light_sphere.num_vertices,.5f);
   scaleYModel(&light_sphere,&light_sphere.num_vertices,.5f);
   scaleZModel(&light_sphere,&light_sphere.num_vertices,.5f);
   Vec4 trans6 = {1.f, 5.f, 1.f, 0.f};
-  //translateModelVec4(&light_sphere, &light_sphere.num_vertices, &trans6);
-  setColor(&light_sphere,&white,&white, &white, &light_shine);
 
-  GLfloat ground_shine = 1000.f;
-  setColor(&ground_cube,&cgray,&cgray,&cgray, &ground_shine);
   /* for (int i = 0; i < 36; i++) */
   /*   { */
   /*     GLfloat x = 0 + rand() % (1+1); */
@@ -360,8 +361,6 @@ void genModels()
   num_models = 7;
 
   model_list = malloc(sizeof(ShaderModel)*num_models);
-  model_theta_list = malloc(sizeof(GLfloat)* num_models);
-  model_offset_list = malloc(sizeof(GLfloat)* num_models);
 
   // define offsets
   //  model_offset_list[0] =
