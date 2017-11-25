@@ -70,6 +70,12 @@ const Vec4 cyan =   {0.f, 1.f, 1.f, 1.f};
 const Vec4 darkcyan =   {0.f, .5f, .5f, 1.f};
 const Vec4 black =   {0.f, .0f, .0f, 1.f};
 const Vec4 white =   {1.f, 1.f, 1.f, 1.f};
+const Vec4 redAmb = {.15,0,0,1};
+const Vec4 blueAmb = {0,0,.15,1};
+const Vec4 yellowAmb = {.15,.15,0,1};
+const Vec4 purpleAmb = {.15,0,.15,1};
+const Vec4 cyanAmb = {0,.15,.15,1};
+
 
 
 Mat4 pj_matrix =
@@ -178,7 +184,7 @@ void display(void)
     {
       char c = s[i];
       glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c);
-    } 
+    }
 
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -305,7 +311,7 @@ void genModels()
   ShaderModel light_sphere;
   ShaderModel ground_cube;
 
-  GLfloat shine = .1f;
+  GLfloat shine = 16.f;
 
   makeCube(&ground_cube,&darkgreen, &green, &green, &shine);
   scaleYModel(&ground_cube,&ground_cube.num_vertices,.001f);
@@ -313,28 +319,11 @@ void genModels()
   scaleZModel(&ground_cube,&ground_cube.num_vertices,15.f);
 
   /*change these to spheres after getting julians sphere code */
-  makeSphere(&sphere1, &black, &red, &darkred, &shine);
-  Vec4 trans1 = {0.f , 1.f, 0.f, 0.f};
-
-//  shine = .2f;
-
-  makeSphere(&sphere2, &black, &blue, &darkblue, &shine);
-  Vec4 trans2 = {2.f, 1.f, 0.f, 0.f};
-
-//  shine = .4f;
-  
-  makeSphere(&sphere3, &black, &yellow, &darkyellow, &shine);
-  Vec4 trans3 = {4.f, 1.f, 0.f, 0.f};
-
-//  shine = .8f;
-  
-  makeSphere(&sphere4, &black, &purple, &darkpurple, &shine);
-  Vec4 trans4 = {6.f, 1.f, 0.f, 0.f};
-
-//  shine = 1.6f;
-  
-  makeSphere(&sphere5, &black, &cyan, &darkcyan, &shine);
-  Vec4 trans5 = {8.f, 1.f, 0.f, 0.f};
+  makeSphere(&sphere1, &redAmb, &red, &darkred, &shine);
+  makeSphere(&sphere2, &blueAmb, &blue, &darkblue, &shine);
+  makeSphere(&sphere3, &yellowAmb, &yellow, &darkyellow, &shine);
+  makeSphere(&sphere4, &purpleAmb, &purple, &darkpurple, &shine);
+  makeSphere(&sphere5, &cyanAmb, &cyan, &darkcyan, &shine);
 
   GLfloat light_shine = 1000.f;
   makeSphere(&light_sphere, &white, &white, &white, &light_shine);
@@ -343,21 +332,6 @@ void genModels()
   scaleZModel(&light_sphere,&light_sphere.num_vertices,.5f);
   Vec4 trans6 = {1.f, 5.f, 1.f, 0.f};
 
-  /* for (int i = 0; i < 36; i++) */
-  /*   { */
-  /*     GLfloat x = 0 + rand() % (1+1); */
-  /*     GLfloat y = 0 + rand() % (1+1); */
-  /*     GLfloat z = 0 + rand() % (1+1); */
-  /*     Vec4 temp = {x,y,z,1}; */
-  /*     ground_cube.colors[i] = temp; */
-  /*   } */
-  /*
-    setColor(&sphere1,&red);
-    setColor(&sphere2,&green);
-    setColor(&sphere3,&blue);
-    setColor(&sphere4,&yellow);
-    setColor(&sphere5,&purple);
-  */
   num_models = 7;
 
   model_list = malloc(sizeof(ShaderModel)*num_models);
