@@ -1,6 +1,6 @@
 #include "ShaderModel.h"
 
-Vec4 cube_vertices[] = 
+Vec4 cube_vertices_sm[] = 
   {{1.f, 1.f, 1.f, 1.f},{-1.f, 1.f, 1.f, 1.f},{-1.f, -1.f, 1.f, 1.f},{-1.f, -1.f, 1.f, 1.f},{1.f, -1.f, 1.f, 1.f},
   {1.f, 1.f, 1.f, 1.f},{1.f, 1.f, 1.f, 1.f},{1.f, -1.f, 1.f, 1.f},{1.f, -1.f, -1.f, 1.f},{1.f, -1.f, -1.f, 1.f},
   {1.f, 1.f, -1.f, 1.f},{1.f, 1.f, 1.f, 1.f},{1.f, 1.f, 1.f, 1.f},{1.f, 1.f, -1.f, 1.f},{-1.f, 1.f, -1.f, 1.f},
@@ -10,14 +10,14 @@ Vec4 cube_vertices[] =
   {1.f, -1.f, -1.f, 1.f},{-1.f, -1.f, -1.f, 1.f},{-1.f, 1.f, -1.f, 1.f},{-1.f, 1.f, -1.f, 1.f},{1.f, 1.f, -1.f, 1.f},
   {1.f, -1.f, -1.f, 1.f}};
 
-void applyModelTranformation(ShaderModel* model, const Mat4* const mat, const int* const num_vertices)
+void applyModelTranformationSM(ShaderModel* model, const Mat4* const mat, const int* const num_vertices)
 {
   for (int i = 0; i < *num_vertices; i++)
     {
       Mat4MultVec4(&(model->vertices[i]),&(model->vertices[i]),mat);
     }
 }
-void translateModelVec4(ShaderModel* model, const int* const num_vertices, const Vec4* const vec)
+void translateModelVec4SM(ShaderModel* model, const int* const num_vertices, const Vec4* const vec)
 {
   for (int i = 0; i < *num_vertices; i++)
     {
@@ -25,60 +25,59 @@ void translateModelVec4(ShaderModel* model, const int* const num_vertices, const
     }
 }
 
-void rotateYOriginModel(ShaderModel* model, const int* const num_vertices, int degree)
+void rotateYOriginModelSM(ShaderModel* model, const int* const num_vertices, int degree)
 {
   Vec4 centroid;
   findCentroid(&centroid, model->vertices,*num_vertices);
   scalarMultVec4(&centroid,&centroid,-1);
-  translateModelVec4(model, num_vertices, &centroid);
+  translateModelVec4SM(model, num_vertices, &centroid);
 
   Mat4 rotation;
   identity(&rotation);
   rotateY(&rotation, M_PI/2);
-  applyModelTranformation(model, &rotation, num_vertices);
+  applyModelTranformationSM(model, &rotation, num_vertices);
 
   scalarMultVec4(&centroid,&centroid,-1);
-  translateModelVec4(model, num_vertices, &centroid);
+  translateModelVec4SM(model, num_vertices, &centroid);
 }
 
-void scaleXModel(ShaderModel* model, const int* const num_vertices, float factor)
+void scaleXModelSM(ShaderModel* model, const int* const num_vertices, float factor)
 {
   /* printf("here"); */
   /* printf("%d",*num_vertices); */
   Mat4 scale;
   identity(&scale);
   Scale(&scale,factor,1,1);
-  applyModelTranformation(model, &scale, num_vertices);
+  applyModelTranformationSM(model, &scale, num_vertices);
 }
-void scaleYModel(ShaderModel* model, const int* const num_vertices, float factor)
+void scaleYModelSM(ShaderModel* model, const int* const num_vertices, float factor)
 {
   /* printf("here"); */
   /* printf("%d",*num_vertices); */
   Mat4 scale;
   identity(&scale);
   Scale(&scale,1,factor,1);
-  applyModelTranformation(model, &scale, num_vertices);
+  applyModelTranformationSM(model, &scale, num_vertices);
 }
-void scaleZModel(ShaderModel* model, const int* const num_vertices, float factor)
+void scaleZModelSM(ShaderModel* model, const int* const num_vertices, float factor)
 {
   /* printf("here"); */
   /* printf("%d",*num_vertices); */
   Mat4 scale;
   identity(&scale);
   Scale(&scale,1,1,factor);
-  applyModelTranformation(model, &scale, num_vertices);
+  applyModelTranformationSM(model, &scale, num_vertices);
 }
 
 
-
-void printVertices(ShaderModel* model, const int* const num_vertices)
+void printVerticesSM(ShaderModel* model, const int* const num_vertices)
 {
   for (int i = 0; i < *num_vertices; i++)
     {
       printf("%f %f %f %d\n",model->vertices[i].x,model->vertices[i].y,model->vertices[i].z,1);
     }
 }
-void deepCopyModel(ShaderModel* ret, const ShaderModel* const model, const int* const num_vertices)
+void deepCopyModelSM(ShaderModel* ret, const ShaderModel* const model, const int* const num_vertices)
 {
   ret->vertices = malloc(*num_vertices*sizeof(Vec4));
   ret->num_vertices = *num_vertices;
@@ -92,7 +91,7 @@ void deepCopyModel(ShaderModel* ret, const ShaderModel* const model, const int* 
     }
 
 }
-void makeCube(ShaderModel* cube, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
+void makeCubeSM(ShaderModel* cube, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
 {
   cube->vertices = malloc(36*sizeof(Vec4));
   cube->num_vertices = 36;
@@ -102,12 +101,12 @@ void makeCube(ShaderModel* cube, const Vec4* const ambient, const Vec4* const sp
   cube->shine = *shine;
   for (int i = 0; i < 36; i++)
     {
-      cube->vertices[i] = cube_vertices[i];
+      cube->vertices[i] = cube_vertices_sm[i];
     }
   cube->num_vertices = 36;
 }
 
-void makeSphere(ShaderModel* sphere, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
+void makeSphereSM(ShaderModel* sphere, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
 {
   sphere->vertices = malloc(sizeof(Vec4)*1140*100);
   sphere->num_vertices = 1140*16;
@@ -161,7 +160,7 @@ void makeSphere(ShaderModel* sphere, const Vec4* const ambient, const Vec4* cons
     }
   }
 }
-void flattenModelList(ShaderModel** list, Vec4** v, int* nv, int* nm)
+void flattenModelListSM(ShaderModel** list, Vec4** v, int* nv, int* nm)
 {
   ShaderModel* deflist = *list; //idk why i cant figure out why this wont work otherwise
 
@@ -190,7 +189,7 @@ void flattenModelList(ShaderModel** list, Vec4** v, int* nv, int* nm)
     }
   *nv = vertex_counter;
 }
-void setColor(ShaderModel* model, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
+void setColorSM(ShaderModel* model, const Vec4* const ambient, const Vec4* const specular, const Vec4* const diffuse, const GLfloat* const shine)
 {
   for (int i = 0; i < model->num_vertices; i++)
     { 

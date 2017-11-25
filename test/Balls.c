@@ -311,25 +311,25 @@ void genModels()
   ShaderModel light_sphere;
   ShaderModel ground_cube;
 
-  GLfloat shine = 16.f;
+  GLfloat shine = -5.f;
 
-  makeCube(&ground_cube,&darkgreen, &green, &green, &shine);
-  scaleYModel(&ground_cube,&ground_cube.num_vertices,.001f);
-  scaleXModel(&ground_cube,&ground_cube.num_vertices,15.f);
-  scaleZModel(&ground_cube,&ground_cube.num_vertices,15.f);
+  makeCubeSM(&ground_cube,&darkgreen, &green, &green, &shine);
+  scaleYModelSM(&ground_cube,&ground_cube.num_vertices,.001f);
+  scaleXModelSM(&ground_cube,&ground_cube.num_vertices,15.f);
+  scaleZModelSM(&ground_cube,&ground_cube.num_vertices,15.f);
 
   /*change these to spheres after getting julians sphere code */
-  makeSphere(&sphere1, &redAmb, &red, &darkred, &shine);
-  makeSphere(&sphere2, &blueAmb, &blue, &darkblue, &shine);
-  makeSphere(&sphere3, &yellowAmb, &yellow, &darkyellow, &shine);
-  makeSphere(&sphere4, &purpleAmb, &purple, &darkpurple, &shine);
-  makeSphere(&sphere5, &cyanAmb, &cyan, &darkcyan, &shine);
+  makeSphereSM(&sphere1, &redAmb, &red, &darkred, &shine);
+  makeSphereSM(&sphere2, &blueAmb, &blue, &darkblue, &shine);
+  makeSphereSM(&sphere3, &yellowAmb, &yellow, &darkyellow, &shine);
+  makeSphereSM(&sphere4, &purpleAmb, &purple, &darkpurple, &shine);
+  makeSphereSM(&sphere5, &cyanAmb, &cyan, &darkcyan, &shine);
 
   GLfloat light_shine = 1000.f;
-  makeSphere(&light_sphere, &white, &white, &white, &light_shine);
-  scaleXModel(&light_sphere,&light_sphere.num_vertices,.5f);
-  scaleYModel(&light_sphere,&light_sphere.num_vertices,.5f);
-  scaleZModel(&light_sphere,&light_sphere.num_vertices,.5f);
+  makeSphereSM(&light_sphere, &white, &white, &white, &light_shine);
+  scaleXModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
+  scaleYModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
+  scaleZModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
   Vec4 trans6 = {1.f, 5.f, 1.f, 0.f};
 
   num_models = 7;
@@ -356,7 +356,7 @@ void genModels()
 int main(int argc, char **argv)
 {
   genModels();
-  flattenModelList(&model_list,&vertices,&num_vertices,&num_models);
+  flattenModelListSM(&model_list,&vertices,&num_vertices,&num_models);
 
   eye.x = eye_radius * sin(theta) * cos(phi);
   eye.y = eye_radius * sin(theta) * sin(phi);
