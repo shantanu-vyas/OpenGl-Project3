@@ -14,16 +14,16 @@ void main()
 {
   if(isShadow == 0)
     {
+      vec4 pos =  transformation * vPosition;
       vec4 light = LightPosition;
-      
       ambient = AmbientProduct;
       vec4 N = normalize(model_view * vNormal);
       N*=-1;
-      vec4 L_temp = model_view * (light - vPosition);
+      vec4 L_temp = model_view * (light - pos);
       vec4 L = normalize(L_temp);
       diffuse = max(dot(L,N), 0.0) * DiffuseProduct;
       vec4 EyePoint = vec4(0.0, 0.0, 0.0, 1.0);
-      vec4 V = normalize(EyePoint - (model_view * vPosition));
+      vec4 V = normalize(EyePoint - (model_view * pos));
       vec4 H = normalize(L + V);
       specular = pow(max(dot(N, H), 0.0), shininess) * SpecularProduct;
       float distance = length(L_temp);
@@ -31,7 +31,7 @@ void main()
                              (attenuation_quadratic * distance * distance));
 
       color = ambient + (attenuation * (diffuse + specular));
-      gl_Position = projection * model_view * transformation * vPosition / vPosition.w;
+      gl_Position = projection * model_view * pos / pos.w;
     }
   else if(isShadow == 1)
     {

@@ -1,20 +1,3 @@
-/*
-  TODO
-  Application:
-  1) Add 5 balls radius .5 all touching each other
-  2) Animate balls to all move at different speeds around origin
-  3) Add small all along +y for the light source
-  4) Add plane for all balls to sit along
-  5) Set specular ambient and diffuse for each ball
-  6) Set keyboard bindings for moving eye about radius around the origin
-  7) Set keybaord bindings for changing radius
-  8) Set keyboard bindings for making light source move
-
-  Shader:
-  1) Create fake shadows by projecting from light source down to the plane y = 0;
-  2) Handle lighting ...
-  3) switch colors to shader from application
-*/
 #include <time.h>
 #include <GL/glew.h>
 #include <GL/freeglut.h>
@@ -98,9 +81,9 @@ Vec4 eye = {0.f, 30.f, 0.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
-GLfloat atten_const = -5.f;
-GLfloat atten_linear = 1.f;
-GLfloat atten_quad = 1.f;
+GLfloat atten_const = 1.f;
+GLfloat atten_linear = .01;
+GLfloat atten_quad = .01;
 Vec4 lightPos = {0.f, 3.f, 0.f, 1.f};
 
 Vec4* vertices;
@@ -130,19 +113,7 @@ void init(void)
   glBufferData(GL_ARRAY_BUFFER, 2 * size, NULL, GL_STATIC_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, size, vertices);
   glBufferSubData(GL_ARRAY_BUFFER, size, size, vertices);
-  //  glBufferSubData(GL_ARRAY_BUFFER, size, size, colors);
 
-  /* VSHADER VARIABLES
-
-     in vec4 vPosition;
-     in vec4 vNormal;
-     in int isShadow;
-     out vec4 color;
-
-     uniform mat4 model_view, projection, transformation;
-     uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
-     uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
-  */
   GLuint vPosition = glGetAttribLocation(program, "vPosition");
   glEnableVertexAttribArray(vPosition);
   glVertexAttribPointer(vPosition, 3, GL_FLOAT, GL_FALSE, sizeof(Vec4), BUFFER_OFFSET(0));
@@ -231,6 +202,7 @@ void display(void)
 
 void modelPhysics(GLfloat delta_sec)
 {
+
   // hackish: index of model is speed. Note floor is index 0 therefore rotation = 0. Light sphere excluded
   for (int i = 1; i < num_models-1; i++){
     /*calculate translation using polar coords */
@@ -311,7 +283,7 @@ void genModels()
   ShaderModel light_sphere;
   ShaderModel ground_cube;
 
-  GLfloat shine = -5.f;
+  GLfloat shine = 15.f;
 
   makeCubeSM(&ground_cube,&darkgreen, &green, &green, &shine);
   scaleYModelSM(&ground_cube,&ground_cube.num_vertices,.001f);
