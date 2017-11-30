@@ -16,6 +16,8 @@
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 #define FPS 60.f
 #define ROLL 1.f //speed of ground and roll of ball
+#define GRAVITY .05f // speed of ball drop
+#define RESIST .8f // percentage of velocity lost on impact
 #define PATH_SIZE 200
 #define BALL_GRAN 120
 
@@ -105,7 +107,6 @@ Mat4 mv_matrix =
 GLfloat theta = M_PI/3.f;
 GLfloat phi = M_PI/2.f;
 GLfloat ground_set = 0.f;
-GLfloat ball_rot = 0.f;
 
 GLfloat eye_radius = 3.f;
 
@@ -116,8 +117,10 @@ Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 GLfloat atten_const = 1.f;
 GLfloat atten_linear = .02;
 GLfloat atten_quad = .02;
-Vec4 ballPos;
+
 Vec4 * lightPos;
+GLfloat ball_height = 0.f;
+GLfloat ball_vspeed = 0.f;
 
 Vec4* vertices;
 int num_vertices;
@@ -241,12 +244,27 @@ void display(void)
 void modelPhysics(GLfloat delta_sec)
 {
   GLfloat dist = delta_sec * (GLfloat) ROLL;
+  GLfloat grav = GRAVITY * delta_sec;
+  // ball height
+//  printf("ball height: %f\n",ball_height);
+//  printf("ball speed: %f\n",ball_vspeed);
+//  printf("grav : %f\n",grav);
+  if (ball_height + ball_vspeed < 0.f) {
+//    printf("Collide!\n");
+    ball_height = 0.f;
+    ball_vspeed = -(ball_vspeed * RESIST); // bounce, with resistance
+  }
+  if (ball_height > grav) ball_vspeed -= grav;
+  else if (fabs(ball_vspeed) < grav) ball_vspeed = 0.f;
+  ball_height += ball_vspeed;
+  // ball rotation
+  GLfloat ball_rot = -2.f * asinf((dist/ 2.f)/.5f);
+  model_list[0].transform.w.y = 0.f;
+  if (ball_rot == ball_rot) rotateX(&model_list[0].transform, ball_rot);
+  model_list[0].transform.w.y = ball_height + 0.5;
+  //floor
   ground_set = fmod(ground_set + dist, (GLfloat) PATH_SIZE);
   GLfloat offset;
-  ball_rot = -2.f * asinf((dist/ 2.f)/.5f);
-  model_list[0].transform.w = (Vec4) {0.f,0.f,0.f,0.f};
-  if (ball_rot == ball_rot) rotateX(&model_list[0].transform, ball_rot);
-  model_list[0].transform.w = ballPos;
   for (int i = 2; i < num_models; i++){
     offset = fmod(ground_set + (GLfloat) i, (GLfloat) PATH_SIZE) - ((GLfloat)PATH_SIZE) / 2.f;
     model_list[i].transform.w.z = offset;
@@ -292,7 +310,7 @@ void keyboard(unsigned char key, int mousex, int mousey)
   if (key == 'S') lightPos->y--;
   if (key == 'd') lightPos->z++;
   if (key == 'D') lightPos->z--;
-
+  if (key == ' ') if (ball_height < .2) ball_vspeed += .2f;
   /* printf("sin theta %f\n",sin(theta)); */
   /* printf("cos phi %f\n",cos(phi)); */
   /* printf("cos theta %f\n",cos(theta)); */
@@ -341,8 +359,7 @@ void genModels()
       identity(&model_list[i].transform);
     }
   lightPos = &model_list[1].transform.w;
-  ballPos = (Vec4) {0.f, .5f, 0.f, 1.f};
-  *lightPos = (Vec4) {2.f, 2.f, -4.f, 1.f};
+  *lightPos = (Vec4) {2.f, 1.f, -3.f, 1.f};
   
   // ball colors
   ball_amb = malloc(sizeof(Vec4) * ball.num_vertices/BALL_GRAN);
