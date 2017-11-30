@@ -114,10 +114,10 @@ Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
 GLfloat atten_const = 1.f;
-GLfloat atten_linear = .05;
-GLfloat atten_quad = .05;
+GLfloat atten_linear = .02;
+GLfloat atten_quad = .02;
+Vec4 ballPos;
 Vec4 * lightPos;
-Vec4 * ballPos;
 
 Vec4* vertices;
 int num_vertices;
@@ -243,8 +243,10 @@ void modelPhysics(GLfloat delta_sec)
   GLfloat dist = delta_sec * (GLfloat) ROLL;
   ground_set = fmod(ground_set + dist, (GLfloat) PATH_SIZE);
   GLfloat offset;
-  ball_rot = 2.f * asinf((dist*delta_sec / 2.f)/1.f);
-  //rotateZ(&model_list[0].transform, ball_rot);
+  ball_rot = -2.f * asinf((dist/ 2.f)/.5f);
+  model_list[0].transform.w = (Vec4) {0.f,0.f,0.f,0.f};
+  if (ball_rot == ball_rot) rotateX(&model_list[0].transform, ball_rot);
+  model_list[0].transform.w = ballPos;
   for (int i = 2; i < num_models; i++){
     offset = fmod(ground_set + (GLfloat) i, (GLfloat) PATH_SIZE) - ((GLfloat)PATH_SIZE) / 2.f;
     model_list[i].transform.w.z = offset;
@@ -338,9 +340,8 @@ void genModels()
     {
       identity(&model_list[i].transform);
     }
-  ballPos = &model_list[0].transform.w;
   lightPos = &model_list[1].transform.w;
-  *ballPos = (Vec4) {0.f, .5f, 0.f, 1.f};
+  ballPos = (Vec4) {0.f, .5f, 0.f, 1.f};
   *lightPos = (Vec4) {2.f, 2.f, -4.f, 1.f};
   
   // ball colors
