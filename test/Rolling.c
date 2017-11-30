@@ -254,7 +254,7 @@ void modelPhysics(GLfloat delta_sec)
     ball_height = 0.f;
     ball_vspeed = -(ball_vspeed * RESIST); // bounce, with resistance
   }
-  if (ball_height > grav) ball_vspeed -= grav;
+  if (ball_height > grav*RESIST) ball_vspeed -= grav;
   else if (fabs(ball_vspeed) < grav) ball_vspeed = 0.f;
   ball_height += ball_vspeed;
   // ball rotation
@@ -310,7 +310,7 @@ void keyboard(unsigned char key, int mousex, int mousey)
   if (key == 'S') lightPos->y--;
   if (key == 'd') lightPos->z++;
   if (key == 'D') lightPos->z--;
-  if (key == ' ') if (ball_height < .2) ball_vspeed += .2f;
+  if (key == ' ') if (ball_height < .1) ball_vspeed += .15f;
   /* printf("sin theta %f\n",sin(theta)); */
   /* printf("cos phi %f\n",cos(phi)); */
   /* printf("cos theta %f\n",cos(theta)); */
@@ -359,7 +359,7 @@ void genModels()
       identity(&model_list[i].transform);
     }
   lightPos = &model_list[1].transform.w;
-  *lightPos = (Vec4) {2.f, 1.f, -3.f, 1.f};
+  *lightPos = (Vec4) {2.f, 3.f, -3.f, 1.f};
   
   // ball colors
   ball_amb = malloc(sizeof(Vec4) * ball.num_vertices/BALL_GRAN);
