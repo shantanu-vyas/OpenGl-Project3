@@ -16,7 +16,8 @@
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 #define FPS 60.f
 #define ROLL 1.f //speed of ground and roll of ball
-#define PATH_SIZE 200 //speed of ground and roll of ball
+#define PATH_SIZE 200
+#define BALL_GRAN 120
 
 clock_t global_clock_prev; // last time rendered/physics ticked
 
@@ -101,28 +102,31 @@ Mat4 mv_matrix =
    {0.f, 0.f, 1.f, 0.f},
    {0.f, 0.f, 0.f, 1.f}};
 
-GLfloat theta = M_PI/32.f;
-GLfloat phi = 0.f;
+GLfloat theta = M_PI/3.f;
+GLfloat phi = M_PI/2.f;
 GLfloat ground_set = 0.f;
 GLfloat ball_rot = 0.f;
 
-GLfloat eye_radius = 5.f;
+GLfloat eye_radius = 3.f;
 
-Vec4 eye = {0.f, 5.f, 0.f, 1.f};
+Vec4 eye = {0.f, 3.f, 3.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 
 GLfloat atten_const = 1.f;
-GLfloat atten_linear = .01;
-GLfloat atten_quad = .01;
+GLfloat atten_linear = .05;
+GLfloat atten_quad = .05;
 Vec4 * lightPos;
+Vec4 * ballPos;
 
 Vec4* vertices;
 int num_vertices;
 
 ShaderModel * model_list;
 int num_models;
-
+Vec4* ball_amb;
+Vec4* ball_spec;
+Vec4* ball_diff;
 
 
 void init(void)
@@ -176,7 +180,7 @@ void init(void)
 void display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+/*
   glRasterPos3f(.6,-.9,0);
   char* s = "FPS is XX.XX";
   void * font = GLUT_BITMAP_9_BY_15;
@@ -185,7 +189,7 @@ void display(void)
       char c = s[i];
       glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c);
     }
-
+*/
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glUniformMatrix4fv(pj_location, 1, GL_FALSE, (GLfloat *) &pj_matrix);
@@ -201,23 +205,30 @@ void display(void)
   for (int i = 0; i < num_models; i++)
     {
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
-      glUniform4fv(ambient_location, 1, (GLfloat *) &model_list[i].ambient);
-      glUniform4fv(diffuse_location, 1, (GLfloat *) &model_list[i].diffuse);
-      glUniform4fv(specular_location, 1, (GLfloat *) &model_list[i].specular);
-      glUniform1fv(shininess_location, 1, (GLfloat *) &model_list[i].shine);
-      glUniform1i(is_shadow,0);
-      glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
-      vc+=model_list[i].num_vertices;
+      if (i == 0) { // ball render; fancy
+        for (int j = 0; j < model_list[i].num_vertices/BALL_GRAN;j++){
+          glUniform4fv(ambient_location, 1, (GLfloat *) &ball_amb[j]);
+          glUniform4fv(diffuse_location, 1, (GLfloat *) &ball_diff[j]);
+          glUniform4fv(specular_location, 1, (GLfloat *) &ball_spec[i]);
+          glUniform1fv(shininess_location, 1, (GLfloat *) &model_list[i].shine);
+          glUniform1i(is_shadow,0);
+          glDrawArrays(GL_TRIANGLES, vc, BALL_GRAN);
+          vc += BALL_GRAN;
+        }
+      }else{
+        glUniform4fv(ambient_location, 1, (GLfloat *) &model_list[i].ambient);
+        glUniform4fv(diffuse_location, 1, (GLfloat *) &model_list[i].diffuse);
+        glUniform4fv(specular_location, 1, (GLfloat *) &model_list[i].specular);
+        glUniform1fv(shininess_location, 1, (GLfloat *) &model_list[i].shine);
+        glUniform1i(is_shadow,0);
+        glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
+        vc+=model_list[i].num_vertices;
+      }
     }
 
-  glUniform4fv(light_pos_location, 1, (GLfloat *) lightPos);
-  //for (int i = 1; i < num_models-1; i++)
-  //  {
-      glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[0].transform);
-      glUniform1i(is_shadow,1);
-      glDrawArrays(GL_TRIANGLES, vc, model_list[0].num_vertices);
-      vc+=model_list[0].num_vertices;
-  //  }
+  glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[0].transform);
+  glUniform1i(is_shadow,1);
+  glDrawArrays(GL_TRIANGLES, 0, model_list[0].num_vertices);
 
   eye.x = eye_radius * sinf(theta) * cosf(phi);
   eye.z = eye_radius * sinf(theta) * sinf(phi);
@@ -232,8 +243,8 @@ void modelPhysics(GLfloat delta_sec)
   GLfloat dist = delta_sec * (GLfloat) ROLL;
   ground_set = fmod(ground_set + dist, (GLfloat) PATH_SIZE);
   GLfloat offset;
-  ball_rot = 2.f * asinf((dist / 2.f)/1.f);
-  rotateZ(&model_list[0].transform, ball_rot);
+  ball_rot = 2.f * asinf((dist*delta_sec / 2.f)/1.f);
+  //rotateZ(&model_list[0].transform, ball_rot);
   for (int i = 2; i < num_models; i++){
     offset = fmod(ground_set + (GLfloat) i, (GLfloat) PATH_SIZE) - ((GLfloat)PATH_SIZE) / 2.f;
     model_list[i].transform.w.z = offset;
@@ -297,24 +308,26 @@ void genModels()
 
   GLfloat shine = 15.f;
   
-  int color;
+  int color = 0;
   for (int i = 0; i < PATH_SIZE; i++){
-    color = rand() % (NUM_COLORS - 2);//skip black and white
-    makeCubeSM(&ground_cubes[i],&ambient[color], &specular[color], &diffuse[color], &shine);
-    scaleYModelSM(&ground_cubes[i],&ground_cubes[i].num_vertices,.005f);
-    scaleZModelSM(&ground_cubes[i],&ground_cubes[i].num_vertices,.5f);
+    color =  (color + 1) % (NUM_COLORS - 2);//skip black and white
+    makeCubeSM(&ground_cubes[i], &ambient[color], &specular[color], &diffuse[color], &shine);
+    scaleYModelSM(&ground_cubes[i], &ground_cubes[i].num_vertices, .005f);
+    scaleZModelSM(&ground_cubes[i], &ground_cubes[i].num_vertices, .5f);
   }
-  color = rand() % NUM_COLORS;
-  makeSphereSM(&ball,&ambient[color], &specular[color], &diffuse[color], &shine);
+  makeSphereSM(&ball, &ambient[WHITE], &specular[WHITE], &diffuse[WHITE], &shine);
+  scaleXModelSM(&ball, &ball.num_vertices, .5f);
+  scaleYModelSM(&ball, &ball.num_vertices, .5f);
+  scaleZModelSM(&ball, &ball.num_vertices, .5f);
 
   makeSphereSM(&light,&ambient[WHITE], &specular[WHITE], &diffuse[WHITE], &shine);
-  scaleXModelSM(&light,&light.num_vertices,.5f);
-  scaleYModelSM(&light,&light.num_vertices,.5f);
-  scaleZModelSM(&light,&light.num_vertices,.5f);
+  scaleXModelSM(&light, &light.num_vertices, .2f);
+  scaleYModelSM(&light, &light.num_vertices, .2f);
+  scaleZModelSM(&light, &light.num_vertices, .2f);
 
   num_models = 2 + PATH_SIZE;
 
-  model_list = malloc(sizeof(ShaderModel)*num_models);
+  model_list = malloc(sizeof(ShaderModel) * num_models);
 
   model_list[0] = ball;
   model_list[1] = light;
@@ -325,9 +338,21 @@ void genModels()
     {
       identity(&model_list[i].transform);
     }
+  ballPos = &model_list[0].transform.w;
   lightPos = &model_list[1].transform.w;
-  *lightPos = (Vec4) {0.f, 3.f, 0.f, 1.f};
-  model_list[0].transform.w.y = 0.5f;
+  *ballPos = (Vec4) {0.f, .5f, 0.f, 1.f};
+  *lightPos = (Vec4) {2.f, 2.f, -4.f, 1.f};
+  
+  // ball colors
+  ball_amb = malloc(sizeof(Vec4) * ball.num_vertices/BALL_GRAN);
+  ball_spec = malloc(sizeof(Vec4) * ball.num_vertices/BALL_GRAN);
+  ball_diff = malloc(sizeof(Vec4) * ball.num_vertices/BALL_GRAN);
+  for (int i = 0; i < ball.num_vertices/BALL_GRAN; i++){
+    color = rand() % (NUM_COLORS - 2);//skip black and white
+    ball_amb[i] = ambient[color];
+    ball_spec[i] = specular[color];
+    ball_diff[i] = diffuse[color];
+  }
 }
 
 int main(int argc, char **argv)
@@ -346,7 +371,7 @@ int main(int argc, char **argv)
   glutInit(&argc, argv);
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
   glutInitWindowSize(1000, 1000);
-  glutCreateWindow("Balls");
+  glutCreateWindow("Rolling");
   glewInit();
   init();
   glutDisplayFunc(display);

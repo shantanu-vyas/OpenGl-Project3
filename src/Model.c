@@ -1,3 +1,4 @@
+#include <math.h>
 #include "Model.h"
 
 Vec4 cube_vertices[] = 
