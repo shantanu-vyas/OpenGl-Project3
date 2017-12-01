@@ -9,7 +9,7 @@ uniform mat4 model_view, projection, transformation;
 uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct, LightPosition;
 uniform float shininess, attenuation_constant, attenuation_linear, attenuation_quadratic;
 vec4 ambient, diffuse, specular;
-
+float x,z;
 void main()
 {
   if(isShadow == 0)
@@ -38,11 +38,12 @@ void main()
       color = vec4(0,.0,.0,1);
       vec4 pos =  transformation * vPosition;
       vec4 vLight = LightPosition;
-
-      pos.x = vLight.x - vLight.y*((vLight.x-pos.x)/(vLight.y-pos.y));
-      pos.z = vLight.z - vLight.y*((vLight.z-pos.z)/(vLight.y-pos.y));
+      x = vLight.x - vLight.y*((vLight.x-pos.x)/(vLight.y-pos.y));
+      if (x == x) pos.x = x;
+      z = vLight.z - vLight.y*((vLight.z-pos.z)/(vLight.y-pos.y));
+      if (z == z) pos.z = z;
       pos.y = .1;
-
+      
       pos = projection * model_view * pos / pos.w;;
       gl_Position = pos;
     }
