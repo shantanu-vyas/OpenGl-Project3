@@ -15,7 +15,7 @@ void main()
   if(isShadow == 0)
     {
       vec4 pos =  transformation * vPosition;
-      vec4 norm =  transformation * -vNormal;
+      vec4 norm =  transformation * vNormal;
       vec4 light = LightPosition;
       ambient = AmbientProduct;
       vec4 N = normalize(model_view * norm);

@@ -38,27 +38,55 @@ GLuint atten_linear_location;
 GLuint atten_quad_location;
 /* VSHADER INPUTS END */
 
-const Vec4 red =    {1.f, 0.f, 0.f, 1.f};
-const Vec4 darkred = {.5f, 0.f, 0.f, 1.f};
-const Vec4 green =  {0.f, 1.f, 0.f, 1.f};
-const Vec4 darkgreen =  {0.f, 0.5f, 0.f, 1.f};
-const Vec4 blue =   {0.f, 0.f, 1.f, 1.f};
-const Vec4 darkblue =   {0.f, 0.f, .5f, 1.f};
-const Vec4 cgray =  {.3f, .3f, .3f, 1.f};
-const Vec4 yellow = {1.f, 1.f, 0.f, 1.f};
-const Vec4 darkyellow = {.5f, .5f, 0.f, 1.f};
-const Vec4 purple = {1.f, 0.f, 1.f, 1.f};
-const Vec4 darkpurple = {.5f, 0.f, .5f, 1.f};
-const Vec4 cyan =   {0.f, 1.f, 1.f, 1.f};
-const Vec4 darkcyan =   {0.f, .5f, .5f, 1.f};
-const Vec4 black =   {0.f, .0f, .0f, 1.f};
-const Vec4 white =   {1.f, 1.f, 1.f, 1.f};
-const Vec4 redAmb = {.15,0,0,1};
-const Vec4 blueAmb = {0,0,.15,1};
-const Vec4 yellowAmb = {.15,.15,0,1};
-const Vec4 purpleAmb = {.15,0,.15,1};
-const Vec4 cyanAmb = {0,.15,.15,1};
+/**
+ * AMBIENT: color of object
+ * DIFFUSE: direct light color
+ * SPECULAR: shine
+ */
 
+enum color {
+  RED,
+  GREEN,
+  BLUE,
+  YELLOW,
+  PURPLE,
+  CYAN,
+  BLACK,
+  WHITE,
+  NUM_COLORS
+};
+
+Vec4 ambient[] = {
+  {.2f, 0.f, 0.f, 1.f},
+  {0.f, .2f, 0.f, 1.f},
+  {0.f, 0.f, .2f, 1.f},
+  {.2f, .2f, 0.f, 1.f},
+  {.2f, 0.f, .2f, 1.f},
+  {0.f, .2f, .2f, 1.f},
+  {0.f, .0f, .0f, 1.f},
+  {1.f, 1.f, 1.f, 1.f}
+};
+Vec4 diffuse[] = {
+  {1.f, 0.f, 0.f, 1.f},
+  {0.f, 1.f, 0.f, 1.f},
+  {0.f, 0.f, 1.f, 1.f},
+  {1.f, 1.f, 0.f, 1.f},
+  {1.f, 0.f, 1.f, 1.f},
+  {0.f, 1.f, 1.f, 1.f},
+  {0.f, .0f, .0f, 1.f},
+  {1.f, 1.f, 1.f, 1.f}
+};
+
+Vec4 specular[] = {
+  {1.f, .8f, .8f, 1.f},
+  {.8f, 1.f, .8f, 1.f},
+  {.8f, .8f, 1.f, 1.f},
+  {1.f, 1.f, .8f, 1.f},
+  {1.f, .8f, 1.f, 1.f},
+  {.8f, 1.f, 1.f, 1.f},
+  {0.f, .0f, .0f, 1.f},
+  {1.f, 1.f, 1.f, 1.f}
+};
 
 
 Mat4 pj_matrix =
@@ -84,7 +112,7 @@ Vec4 up =  {0.f, -1.f, 0.f, 0.f};
 GLfloat atten_const = 1.f;
 GLfloat atten_linear = .01;
 GLfloat atten_quad = .01;
-Vec4 lightPos = {0.f, 3.f, 0.f, 1.f};
+Vec4 * lightPos;
 
 Vec4* vertices;
 //Vec4* colors;
@@ -166,8 +194,7 @@ void display(void)
   glUniform1fv(atten_linear_location, 1, (GLfloat *) &atten_linear);
   glUniform1fv(atten_quad_location, 1, (GLfloat *) &atten_quad);
 
-  //julian look at this
-  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
+  glUniform4fv(light_pos_location, 1, (GLfloat *) lightPos);
 
   int vc = 0;
   for (int i = 0; i < num_models; i++)
@@ -182,7 +209,7 @@ void display(void)
       vc+=model_list[i].num_vertices;
     }
 
-  glUniform4fv(light_pos_location, 1, (GLfloat *) &lightPos);
+  glUniform4fv(light_pos_location, 1, (GLfloat *) lightPos);
   vc = 36; //dont draw shadow for the ground cube
   for (int i = 1; i < num_models-1; i++)
     {
@@ -211,14 +238,6 @@ void modelPhysics(GLfloat delta_sec)
     model_list[i].transform.w.y = 1;
     ball_rot+=.005;
   }
-  model_list[num_models-1].transform.w.x = lightPos.x;
-  model_list[num_models-1].transform.w.y = lightPos.y;
-  model_list[num_models-1].transform.w.z = lightPos.z;
-}
-
-void genModelShadows()
-{
-
 }
 
 void idle_func()
@@ -231,7 +250,6 @@ void idle_func()
   if (delta_sec >= 1.f / FPS) {
     render = 1;
     modelPhysics(delta_sec);
-    genModelShadows();
   }
   if (render){
     glutPostRedisplay();
@@ -257,12 +275,12 @@ void keyboard(unsigned char key, int mousex, int mousey)
   if (key == 'X') atten_linear -= .1f;
   if (key == 'c') atten_quad += .1f;
   if (key == 'C') atten_quad -= .1f;
-  if (key == 'a') lightPos.x++;
-  if (key == 's') lightPos.x--;
-  if (key == 'd') lightPos.y++;
-  if (key == 'f') lightPos.y--;
-  if (key == 'g') lightPos.z++;
-  if (key == 'h') lightPos.z--;
+  if (key == 'a') lightPos->x++;
+  if (key == 's') lightPos->x--;
+  if (key == 'd') lightPos->y++;
+  if (key == 'f') lightPos->y--;
+  if (key == 'g') lightPos->z++;
+  if (key == 'h') lightPos->z--;
 
   /* printf("sin theta %f\n",sin(theta)); */
   /* printf("cos phi %f\n",cos(phi)); */
@@ -285,27 +303,24 @@ void genModels()
 
   GLfloat shine = 15.f;
 
-  makeCubeSM(&ground_cube,&darkgreen, &green, &green, &shine);
+  makeCubeSM(&ground_cube, &ambient[GREEN], &specular[GREEN], &diffuse[GREEN], &shine);
   scaleYModelSM(&ground_cube,&ground_cube.num_vertices,.001f);
   scaleXModelSM(&ground_cube,&ground_cube.num_vertices,15.f);
   scaleZModelSM(&ground_cube,&ground_cube.num_vertices,15.f);
 
   /*change these to spheres after getting julians sphere code */
-  makeSphereSM(&sphere1, &redAmb, &red, &darkred, &shine);
-  makeSphereSM(&sphere2, &blueAmb, &blue, &darkblue, &shine);
-  makeSphereSM(&sphere3, &yellowAmb, &yellow, &darkyellow, &shine);
-  makeSphereSM(&sphere4, &purpleAmb, &purple, &darkpurple, &shine);
-  makeSphereSM(&sphere5, &cyanAmb, &cyan, &darkcyan, &shine);
+  makeSphereSM(&sphere1, &ambient[0], &specular[0], &diffuse[0], &shine);
+  makeSphereSM(&sphere2, &ambient[1], &specular[1], &diffuse[1], &shine);
+  makeSphereSM(&sphere3, &ambient[2], &specular[2], &diffuse[2], &shine);
+  makeSphereSM(&sphere4, &ambient[3], &specular[3], &diffuse[3], &shine);
+  makeSphereSM(&sphere5, &ambient[4], &specular[4], &diffuse[4], &shine);
 
-  GLfloat light_shine = 1000.f;
-  makeSphereSM(&light_sphere, &white, &white, &white, &light_shine);
+  makeSphereSM(&light_sphere, &ambient[WHITE], &specular[WHITE], &diffuse[WHITE], &shine);
   scaleXModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
   scaleYModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
   scaleZModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
-  Vec4 trans6 = {1.f, 5.f, 1.f, 0.f};
-
+  
   num_models = 7;
-
   model_list = malloc(sizeof(ShaderModel)*num_models);
 
   // define offsets
@@ -318,11 +333,13 @@ void genModels()
   model_list[4] = sphere4;
   model_list[5] = sphere5;
   model_list[6] = light_sphere;
+  lightPos = &model_list[6].transform.w;
   // init tranformations
   for (int i = 0; i < num_models; i++)
     {
       identity(&model_list[i].transform);
     }
+  *lightPos = (Vec4) {1.f, 3.f, 1.f, 1.f};
 }
 
 int main(int argc, char **argv)
