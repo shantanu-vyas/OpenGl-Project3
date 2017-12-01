@@ -104,7 +104,7 @@ Mat4 mv_matrix =
    {0.f, 0.f, 1.f, 0.f},
    {0.f, 0.f, 0.f, 1.f}};
 
-GLfloat theta = M_PI/3.f;
+GLfloat theta = 2.f * M_PI/5.f;
 GLfloat phi = M_PI/2.f;
 GLfloat ground_set = 0.f;
 
@@ -112,11 +112,11 @@ GLfloat eye_radius = 3.f;
 
 Vec4 eye = {0.f, 3.f, 3.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
-Vec4 up =  {0.f, -1.f, 0.f, 0.f};
+Vec4 up =  {0.f, 1.f, 0.f, 0.f};
 
 GLfloat atten_const = 1.f;
-GLfloat atten_linear = .02;
-GLfloat atten_quad = .02;
+GLfloat atten_linear = 0.0f;
+GLfloat atten_quad = 0.0f;
 
 Vec4 * lightPos;
 GLfloat ball_height = 0.f;
@@ -156,7 +156,7 @@ void init(void)
 
   GLuint vNormal = glGetAttribLocation(program, "vNormal");
   glEnableVertexAttribArray(vNormal);
-  glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_TRUE, sizeof(Vec4), (GLvoid *) size);
+  glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, sizeof(Vec4), (GLvoid *) size);
 
   GLuint isShadow = glGetAttribLocation(program, "isShadow");
 
@@ -359,7 +359,7 @@ void genModels()
       identity(&model_list[i].transform);
     }
   lightPos = &model_list[1].transform.w;
-  *lightPos = (Vec4) {2.f, 3.f, -3.f, 1.f};
+  *lightPos = (Vec4) {-1.f, 3.f, -2.f, 1.f};
   
   // ball colors
   ball_amb = malloc(sizeof(Vec4) * ball.num_vertices/BALL_GRAN);

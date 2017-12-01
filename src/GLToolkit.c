@@ -41,7 +41,7 @@ void genLookAt(Mat4* ret, const Vec4* const eye, const Vec4* const at, const Vec
   normalize(&n,&n);
 
   Vec4 u; //side
-  cross(&u,&n,up);
+  cross(&u,up,&n);
   normalize(&u,&u);
 
   /* printf("u\n"); */

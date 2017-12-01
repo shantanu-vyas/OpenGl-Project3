@@ -100,18 +100,18 @@ Mat4 mv_matrix =
    {0.f, 0.f, 1.f, 0.f},
    {0.f, 0.f, 0.f, 1.f}};
 
-GLfloat theta = M_PI/32.f;
-GLfloat phi = 0.f;
+GLfloat theta = 2.f * M_PI/5.f;
+GLfloat phi = M_PI/2.f;
 
-GLfloat eye_radius = 20.f;
+GLfloat eye_radius = 15.f;
 
-Vec4 eye = {0.f, 30.f, 0.f, 1.f};
+Vec4 eye = {0.f, 3.f, 3.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
-Vec4 up =  {0.f, -1.f, 0.f, 0.f};
+Vec4 up =  {0.f, 1.f, 0.f, 0.f};
 
 GLfloat atten_const = 1.f;
-GLfloat atten_linear = .01;
-GLfloat atten_quad = .01;
+GLfloat atten_linear = .02f;
+GLfloat atten_quad = .02f;
 Vec4 * lightPos;
 
 Vec4* vertices;
@@ -148,7 +148,7 @@ void init(void)
 
   GLuint vNormal = glGetAttribLocation(program, "vNormal");
   glEnableVertexAttribArray(vNormal);
-  glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_TRUE, sizeof(Vec4), (GLvoid *) size);
+  glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, sizeof(Vec4), (GLvoid *) size);
 
   GLuint isShadow = glGetAttribLocation(program, "isShadow");
 
@@ -175,7 +175,7 @@ void init(void)
 void display(void)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+/*
   glRasterPos3f(.6,-.9,0);
   char* s = "FPS is XX.XX";
   void * font = GLUT_BITMAP_9_BY_15;
@@ -184,7 +184,7 @@ void display(void)
       char c = s[i];
       glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c);
     }
-
+*/
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glUniformMatrix4fv(pj_location, 1, GL_FALSE, (GLfloat *) &pj_matrix);
@@ -293,11 +293,8 @@ void keyboard(unsigned char key, int mousex, int mousey)
 
 void genModels()
 {
-  ShaderModel sphere1;
-  ShaderModel sphere2;
-  ShaderModel sphere3;
-  ShaderModel sphere4;
-  ShaderModel sphere5;
+  int num_spheres = 5;
+  ShaderModel spheres[num_spheres];
   ShaderModel light_sphere;
   ShaderModel ground_cube;
 
@@ -309,37 +306,36 @@ void genModels()
   scaleZModelSM(&ground_cube,&ground_cube.num_vertices,15.f);
 
   /*change these to spheres after getting julians sphere code */
-  makeSphereSM(&sphere1, &ambient[0], &specular[0], &diffuse[0], &shine);
-  makeSphereSM(&sphere2, &ambient[1], &specular[1], &diffuse[1], &shine);
-  makeSphereSM(&sphere3, &ambient[2], &specular[2], &diffuse[2], &shine);
-  makeSphereSM(&sphere4, &ambient[3], &specular[3], &diffuse[3], &shine);
-  makeSphereSM(&sphere5, &ambient[4], &specular[4], &diffuse[4], &shine);
+  for (int i = 0; i < num_spheres; i++){
+    makeSphereSM(&spheres[i], &ambient[i % (NUM_COLORS - 2)],
+                              &specular[i % (NUM_COLORS - 2)],
+                              &diffuse[i % (NUM_COLORS - 2)], &shine);
+    scaleXModelSM(&spheres[i], &spheres[i].num_vertices, 1.f);
+    scaleYModelSM(&spheres[i], &spheres[i].num_vertices, 1.f);
+    scaleZModelSM(&spheres[i], &spheres[i].num_vertices, 1.f);
+  }
 
   makeSphereSM(&light_sphere, &ambient[WHITE], &specular[WHITE], &diffuse[WHITE], &shine);
   scaleXModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
   scaleYModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
   scaleZModelSM(&light_sphere,&light_sphere.num_vertices,.5f);
   
-  num_models = 7;
+  num_models = 2 + num_spheres;
   model_list = malloc(sizeof(ShaderModel)*num_models);
 
   // define offsets
   //  model_offset_list[0] =
 
   model_list[0] = ground_cube;
-  model_list[1] = sphere1;
-  model_list[2] = sphere2;
-  model_list[3] = sphere3;
-  model_list[4] = sphere4;
-  model_list[5] = sphere5;
-  model_list[6] = light_sphere;
-  lightPos = &model_list[6].transform.w;
+  for (int i = 0; i < num_spheres; i++) model_list[i+1] = spheres[i];
+  model_list[1 + num_spheres] = light_sphere;
+  lightPos = &model_list[1 + num_spheres].transform.w;
   // init tranformations
   for (int i = 0; i < num_models; i++)
     {
       identity(&model_list[i].transform);
     }
-  *lightPos = (Vec4) {1.f, 3.f, 1.f, 1.f};
+  *lightPos = (Vec4) {-1.f, 3.f, -2.f, 1.f};
 }
 
 int main(int argc, char **argv)

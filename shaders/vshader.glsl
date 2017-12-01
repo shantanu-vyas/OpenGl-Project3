@@ -19,7 +19,6 @@ void main()
       vec4 light = LightPosition;
       ambient = AmbientProduct;
       vec4 N = normalize(model_view * norm);
-      N*=-1;
       vec4 L_temp = model_view * (light - pos);
       vec4 L = normalize(L_temp);
       diffuse = max(dot(L,N), 0.0) * DiffuseProduct;
