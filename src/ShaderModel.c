@@ -1,4 +1,7 @@
 #include "ShaderModel.h"
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 Vec4 cube_vertices_sm[] = 
   {{1.f, 1.f, 1.f, 1.f},{-1.f, 1.f, 1.f, 1.f},{-1.f, -1.f, 1.f, 1.f},{-1.f, -1.f, 1.f, 1.f},{1.f, -1.f, 1.f, 1.f},

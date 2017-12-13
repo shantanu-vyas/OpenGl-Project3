@@ -1,4 +1,5 @@
-CC		:= ccache clang -g
+#CC		:= ccache clang -g
+CC		:= ccache gcc -std=c11
 SRCDIR		 := src
 BUILDSRCDIR	 := build
 
@@ -12,14 +13,14 @@ SRCEXT		 := c
 OBJEXT		 := o
 EXEEXT		 :=
 
-SOURCES	  := $(shell find $(SRCDIR)		 -type f -name *.$(SRCEXT))
+SOURCES	  := $(shell find $(SRCDIR)	 -type f -name *.$(SRCEXT))
 HEADERS	  := $(shell find $(INCLUDEDIR)	 -type f -name *.$(HEADEREXT))
 TESTS	  := $(shell find $(TESTDIR)	  -type f -name *.$(SRCEXT))
 OBJECTS	  := $(addprefix $(BUILDSRCDIR)/, $(notdir $(SOURCES:.$(SRCEXT)=.$(OBJEXT))))
 TOBJECTS  := $(addprefix $(BUILDTESTDIR)/, $(notdir $(TESTS:.$(SRCEXT)=.$(OBJEXT))))
 TPROGRAMS := $(addprefix $(BINTESTDIR)/, $(notdir $(TESTS:.$(SRCEXT)=)))
 
-LIB	   := -L/usr/lib64/ -Wall -lGL -lGLU -lGLEW -lglut -lm
+LIB	   := -L/usr/lib/ -Wall -lGL -lGLU -lGLEW -lglut -lm
 #CFLAGS := -Wall -g -Wno-deprecated -march=native -std=c++11
 #CFLAGS := -g 
 INC	   := -I $(INCLUDEDIR) 

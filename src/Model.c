@@ -1,5 +1,8 @@
 #include <math.h>
 #include "Model.h"
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 Vec4 cube_vertices[] = 
   {{1.f, 1.f, 1.f, 1.f},{-1.f, 1.f, 1.f, 1.f},{-1.f, -1.f, 1.f, 1.f},{-1.f, -1.f, 1.f, 1.f},{1.f, -1.f, 1.f, 1.f},

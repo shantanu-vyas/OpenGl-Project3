@@ -12,6 +12,9 @@
 #include "ShaderModel.h"
 #include "GLToolkit.h"
 #include "Rolling.h"
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846
+#endif
 
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
 #define FPS 60.f
