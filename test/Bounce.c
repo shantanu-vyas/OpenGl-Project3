@@ -252,7 +252,7 @@ void modelPhysics(GLfloat delta_sec)
     scalarMultVec4(&tick_speed, &physics_list[i].velocity, delta_sec);
     addVec4(&model_list[i+NUM_STATIC].transform.w, &model_list[i+NUM_STATIC].transform.w, &tick_speed);
   }
-  sphereCollisionTick(physics_list, NUM_BALLS, boundaries);
+  sphereCollisionTick(physics_list, NUM_BALLS, boundaries, delta_sec);
 }
 
 void idle_func()

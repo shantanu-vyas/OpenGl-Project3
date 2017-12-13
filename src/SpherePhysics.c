@@ -2,43 +2,51 @@
 #include "SpherePhysics.h"
 #include "VecLib.h"
 
-void checkWalls(SphereEntity * ent, GLfloat boundary){
-  if (fabsf(ent->position->x + ent->velocity.x) + ent->radius >= fabsf(boundary)){
+void checkWalls(SphereEntity * ent, GLfloat boundary, GLfloat delta_sec){
+  Vec4 speed;
+  scalarMultVec4(&speed, &ent->velocity, delta_sec);
+  if (fabsf(ent->position->x + speed.x) + ent->radius >= fabsf(boundary)){
     ent->velocity.x *= -1.f;
   }
-  if (fabsf(ent->position->z + ent->velocity.z) + ent->radius >= fabsf(boundary)){
+  if (fabsf(ent->position->z + speed.z) + ent->radius >= fabsf(boundary)){
     ent->velocity.z *= -1.f;
   }
 
 }
 
-void sphereCollisionTick(SphereEntity * ents, int num_ents, GLfloat boundary){
+void sphereCollisionTick(SphereEntity * ents, int num_ents, GLfloat boundary, GLfloat delta_sec){
   for (int i = 0; i < num_ents; i++){
     for (int j = 0; j < num_ents; j++){
-      if (i < j && collidesWith(&ents[i],&ents[j])){
-        collision(&ents[i], &ents[j]); 
+      if (i < j && collidesWith(&ents[i],&ents[j], delta_sec)){
+        collision(&ents[i], &ents[j], delta_sec); 
       }
     }
-    checkWalls(&ents[i], boundary);
+    checkWalls(&ents[i], boundary, delta_sec);
   }
 }
 
-int collidesWith(SphereEntity * e1, SphereEntity * e2){
+int collidesWith(SphereEntity * e1, SphereEntity * e2, GLfloat delta_sec){
   Vec4 next1, next2;
-  addVec4(&next1, e1->position, &e1->velocity);
-  addVec4(&next2, e2->position, &e2->velocity);
+  Vec4 speed1, speed2;
+  scalarMultVec4(&speed1, &e1->velocity, delta_sec);
+  scalarMultVec4(&speed2, &e2->velocity, delta_sec);
+  addVec4(&next1, e1->position, &speed1);
+  addVec4(&next2, e2->position, &speed2);
   GLfloat dist = powf(powf(fabsf(next1.x - next2.x), 2.f) + powf(fabsf(next1.z - next2.z), 2.f), 0.5f);
   return(dist <= e1->radius + e2->radius);
 }
 
-void collision(SphereEntity * e1, SphereEntity * e2){
+void collision(SphereEntity * e1, SphereEntity * e2, GLfloat delta_sec){
   Vec4 n1, n2;
   GLfloat dot1, dot2;
   GLfloat momentum1, momentum2;
   Vec4 temp1, temp2;
   Vec4 next1, next2;
-  addVec4(&next1, e1->position, &e1->velocity);
-  addVec4(&next2, e2->position, &e2->velocity);
+  Vec4 speed1, speed2;
+  scalarMultVec4(&speed1, &e1->velocity, delta_sec);
+  scalarMultVec4(&speed2, &e2->velocity, delta_sec);
+  addVec4(&next1, e1->position, &speed1);
+  addVec4(&next2, e2->position, &speed2);
   subVec4(&n1, &next1, &next2);
   normalize(&n1, &n1);
   scalarMultVec4(&n2, &n1, -1.f);
