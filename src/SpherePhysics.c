@@ -65,13 +65,13 @@ void collision(SphereEntity * e1, SphereEntity * e2, GLfloat delta_sec){
   // reflect momentums
   dot(&dot1, &e1->velocity, &n1);
   dot(&dot2, &e2->velocity, &n2);
-  scalarMultVec4(&temp1, &n1, dot1 * 2.f);
-  scalarMultVec4(&temp2, &n2, dot2 * 2.f);
+  scalarMultVec4(&temp1, &n1, dot1 * 1.f);
+  scalarMultVec4(&temp2, &n2, dot2 * 1.f);
   temp1.w = 0.f;
   temp2.w = 0.f;
   subVec4(&e1->velocity, &e1->velocity, &temp1);
-  //try dis subVec4(&e2->velocity, &e2->velocity, &temp2);
-  //try dis addVec4(&e1->velocity, &e1->velocity, &temp2);
+  subVec4(&e2->velocity, &e2->velocity, &temp2);
+  addVec4(&e1->velocity, &e1->velocity, &temp2);
   addVec4(&e2->velocity, &e2->velocity, &temp1);
 }
 
