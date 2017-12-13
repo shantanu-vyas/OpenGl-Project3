@@ -15,23 +15,18 @@ void checkWalls(SphereEntity * ent, GLfloat boundary){
 void sphereCollisionTick(SphereEntity * ents, int num_ents, GLfloat boundary){
   SphereEntity * collisions[num_ents];
   int count;
-  int changed;
-  do{
-    changed = 0;
-    for (int i = 0; i < num_ents; i++){
-      count = 0;
-      for (int j = 0; j < num_ents; j++){
-        if (i < j && collidesWith(&ents[i],&ents[j])){
-          collisions[count++] = &ents[j];
-          changed = 1;
-        }
+  for (int i = 0; i < num_ents; i++){
+    count = 0;
+    for (int j = 0; j < num_ents; j++){
+      if (i < j && collidesWith(&ents[i],&ents[j])){
+        collisions[count++] = &ents[j];
       }
-      for (int j = 0; j < count; j++){
-        collision(&ents[i],collisions[j]); 
-      }
-      checkWalls(&ents[i], boundary);
     }
-  } while (changed);
+    for (int j = 0; j < count; j++){
+      collision(&ents[i],collisions[j]); 
+    }
+    checkWalls(&ents[i], boundary);
+  }
 }
 
 int collidesWith(SphereEntity * e1, SphereEntity * e2){
