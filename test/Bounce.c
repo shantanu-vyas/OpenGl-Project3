@@ -110,7 +110,7 @@ Mat4 mv_matrix =
    {0.f, 0.f, 1.f, 0.f},
    {0.f, 0.f, 0.f, 1.f}};
 
-GLfloat theta = 2.f * M_PI/5.f;
+GLfloat theta = 0.01f;
 GLfloat phi = M_PI/2.f;
 
 GLfloat eye_radius = (GLfloat) NUM_BALLS;
@@ -313,13 +313,6 @@ void keyboard(unsigned char key, int mousex, int mousey)
       }
     }
   }
-  /* printf("sin theta %f\n",sin(theta)); */
-  /* printf("cos phi %f\n",cos(phi)); */
-  /* printf("cos theta %f\n",cos(theta)); */
-  /* printf("theta %f\n",theta); */
-  /* printf("phi %f\n",phi); */
-
-  /* printVector(&eye); */
 }
 
 void genModels()
@@ -328,16 +321,14 @@ void genModels()
   ShaderModel light;
   ShaderModel balls[NUM_BALLS];
 
-  GLfloat shine;
+  GLfloat shine = 30.f;
   boundaries = (GLfloat)(NUM_BALLS + 1) / 2.f;
  
-  shine = 1.f;
   makeCubeSM(&ground, &ambient[GREEN], &specular[GREEN], &diffuse[GREEN], &shine);
   scaleXModelSM(&ground, &ground.num_vertices, boundaries);
   scaleYModelSM(&ground, &ground.num_vertices, .005f);
   scaleZModelSM(&ground, &ground.num_vertices, boundaries);
   
-  shine = 100.f;
   makeSphereSM(&light,&specular[WHITE], &specular[WHITE], &specular[WHITE], &shine);
   scaleXModelSM(&light, &light.num_vertices, .2f);
   scaleYModelSM(&light, &light.num_vertices, .2f);
@@ -349,7 +340,6 @@ void genModels()
   Vec4 amb, spec, diff;
   for (int i = 0; i < NUM_BALLS; i++){
     // init model
-    shine = (GLfloat) (rand() % 495 + 5);
     color1 = rand() % (NUM_COLORS);
     color2 = rand() % (NUM_COLORS);
     color3 = rand() % (NUM_COLORS);
@@ -387,13 +377,12 @@ void genModels()
   }
   // init physics
   for (int i = 0; i < NUM_BALLS; i++){
-    GLfloat speed = (GLfloat)(rand() % 1000) / 10000.f;
+    GLfloat speed = (GLfloat)(rand() % 1000) / 5000.f;
     GLfloat angle = fmodf((GLfloat) rand(), 2.f * M_PI);
     Vec4 vel = {speed * cosf(angle), 0.f, speed * sinf(angle), 0.f};
     
     physics_list[i].velocity = vel;
     physics_list[i].position = &model_list[i+NUM_STATIC].transform.w;
-    physics_list[i].mass = 750.f - model_list[i+NUM_STATIC].shine;
     physics_list[i].elasticity = 1.f;
     physics_list[i].radius = BALL_RADIUS;
   }
