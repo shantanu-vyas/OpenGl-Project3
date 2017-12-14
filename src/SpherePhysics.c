@@ -17,7 +17,7 @@ void checkWalls(SphereEntity * ent, GLfloat boundary, GLfloat delta_sec){
 void sphereCollisionTick(SphereEntity * ents, int num_ents, GLfloat boundary, GLfloat delta_sec){
   for (int i = 0; i < num_ents; i++){
     checkWalls(&ents[i], boundary, delta_sec);
-    for (int j = 0; j < num_ents; j++){
+    for (int j = i; j < num_ents; j++){
       if (i < j && collidesWith(&ents[i],&ents[j], delta_sec)){
         collision(&ents[i], &ents[j], delta_sec); 
       }
@@ -65,8 +65,8 @@ void collision(SphereEntity * e1, SphereEntity * e2, GLfloat delta_sec){
   // reflect momentums
   dot(&dot1, &e1->velocity, &n1);
   dot(&dot2, &e2->velocity, &n2);
-  scalarMultVec4(&temp1, &n1, dot1 * 1.f);
-  scalarMultVec4(&temp2, &n2, dot2 * 1.f);
+  scalarMultVec4(&temp1, &n1, dot1);
+  scalarMultVec4(&temp2, &n2, dot2);
   temp1.w = 0.f;
   temp2.w = 0.f;
   subVec4(&e1->velocity, &e1->velocity, &temp1);

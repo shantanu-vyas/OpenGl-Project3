@@ -158,7 +158,7 @@ void init(void)
   glEnableVertexAttribArray(vNormal);
   glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, sizeof(Vec4), (GLvoid *) size);
 
-  GLuint isShadow = glGetAttribLocation(program, "isShadow");
+  is_shadow = glGetUniformLocation(program, "isShadow");
 
   pj_location = glGetUniformLocation(program, "projection");
   mv_location = glGetUniformLocation(program, "model_view");
@@ -351,13 +351,17 @@ void genModels()
   ShaderModel light;
   ShaderModel balls[NUM_BALLS];
 
-  GLfloat shine = 30.f;
+  GLfloat shine;
   boundaries = (GLfloat)(NUM_BALLS + 1) / 2.f;
  
+  shine = 50.f;
+  
   makeCubeSM(&ground, &ambient[GREEN], &specular[GREEN], &diffuse[GREEN], &shine);
   scaleXModelSM(&ground, &ground.num_vertices, boundaries);
   scaleYModelSM(&ground, &ground.num_vertices, .005f);
   scaleZModelSM(&ground, &ground.num_vertices, boundaries);
+  
+  shine = 30.f;
   
   makeSphereSM(&light,&specular[WHITE], &specular[WHITE], &specular[WHITE], &shine);
   scaleXModelSM(&light, &light.num_vertices, .2f);
@@ -417,7 +421,7 @@ void genModels()
     physics_list[i].radius = BALL_RADIUS;
   }
   lightPos = &model_list[1].transform.w;
-  *lightPos = (Vec4) {0.f, 3.f, 0.f, 1.f};
+  *lightPos = (Vec4) {(GLfloat) NUM_BALLS / 4.f, (GLfloat) NUM_BALLS / 4.f, 0.f, 1.f};
 }
 
 int main(int argc, char **argv)
