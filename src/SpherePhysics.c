@@ -5,10 +5,10 @@
 void checkWalls(SphereEntity * ent, GLfloat boundary, GLfloat delta_sec){
   Vec4 speed;
   scalarMultVec4(&speed, &ent->velocity, delta_sec);
-  if (fabsf(ent->position->x + speed.x) + ent->radius >= fabsf(boundary)){
+  if (fabsf(ent->position->x + speed.x) + ent->radius > fabsf(boundary)){
     ent->velocity.x *= -1.f;
   }
-  if (fabsf(ent->position->z + speed.z) + ent->radius >= fabsf(boundary)){
+  if (fabsf(ent->position->z + speed.z) + ent->radius > fabsf(boundary)){
     ent->velocity.z *= -1.f;
   }
 
@@ -36,7 +36,7 @@ int collidesWith(SphereEntity * e1, SphereEntity * e2, GLfloat delta_sec){
   addVec4(&next2, e2->position, &speed2);
   subVec4(&diff, &next1, &next2);
   vecSize(&dist, &diff);
-  return(dist <= e1->radius + e2->radius);
+  return(dist < e1->radius + e2->radius);
 }
 
 void collision(SphereEntity * e1, SphereEntity * e2, GLfloat delta_sec){

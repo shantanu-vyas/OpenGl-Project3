@@ -19,12 +19,12 @@
 #endif
 
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
-#define WINDOW 600
+#define WINDOW 400
 #define FPS 60.f
 #define TICK 1.f/FPS
 
 #define BALL_RADIUS 0.5f
-#define NUM_BALLS 10
+#define NUM_BALLS 16
 #define NUM_STATIC 2
 
 #define ROLL .999f // roll slowdown percentage
@@ -255,6 +255,35 @@ void modelPhysics(GLfloat delta_sec)
   sphereCollisionTick(physics_list, NUM_BALLS, boundaries, delta_sec);
 }
 
+void setToPoolBreak(){
+  int iter = 0;
+  int row_iter = 0;
+  int row = 1;
+  GLfloat row_offset = powf(powf(2.f*BALL_RADIUS,2.f) - powf(BALL_RADIUS,2.f),0.5f);
+  Vec4 shoot_start = {-4.f * boundaries/5.f, BALL_RADIUS, 0.f, 1.f};
+  Vec4 iter_pos = {boundaries/3.f, BALL_RADIUS, 0.f, 1.f};
+  while (iter < NUM_BALLS){
+    row_iter++;
+    iter++;
+    *physics_list[iter - 1].position = iter_pos;
+    physics_list[iter - 1].velocity = (Vec4) {0.f,0.f,0.f,0.f};
+    if (iter == NUM_BALLS){
+      *physics_list[iter - 1].position = shoot_start;
+      physics_list[iter - 1].velocity = (Vec4) {BALL_RADIUS*NUM_BALLS/2.f,0.f,0.f,0.f};
+    }else{
+      if(row_iter%row == 0){
+        row++;
+        row_iter = 0;
+        iter_pos.z = -1.f * BALL_RADIUS * (row-1);
+        iter_pos.x += row_offset;
+      }else{
+        iter_pos.z += 2.f * BALL_RADIUS;
+      }
+    }
+  }
+
+}
+
 void idle_func()
 {
   // delta time from last rendering
@@ -297,6 +326,7 @@ void keyboard(unsigned char key, int mousex, int mousey)
   if (key == 'S') lightPos->y--;
   if (key == 'd') lightPos->z++;
   if (key == 'D') lightPos->z--;
+  if (key == 'p') setToPoolBreak();
   if (key == ' ') {
     for (int i = 0; i < NUM_BALLS; i++){
       if (physics_list[i].velocity.x == 0.f){
@@ -416,4 +446,11 @@ int main(int argc, char **argv)
 
   return 0;
 }
+
+
+
+
+
+
+
 
