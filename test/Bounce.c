@@ -19,12 +19,12 @@
 #endif
 
 #define BUFFER_OFFSET( offset )   ((GLvoid*) (offset))
-#define WINDOW 400
+#define WINDOW 1000
 #define FPS 60.f
 #define TICK 1.f/FPS
 
 #define BALL_RADIUS 0.5f
-#define NUM_BALLS 16
+#define NUM_BALLS 121 // best with triangle numbers + 1; Ex. 11, 16,..., 121,..., 301,...
 #define NUM_STATIC 2
 
 #define ROLL .999f // roll slowdown percentage
@@ -120,8 +120,8 @@ Vec4 at =  {0.f, 0.f, 0.f, 1.f};
 Vec4 up =  {0.f, 1.f, 0.f, 0.f};
 
 GLfloat atten_const = 1.f;
-GLfloat atten_linear = 0.02f;
-GLfloat atten_quad = 0.02f;
+GLfloat atten_linear = 0.01f;
+GLfloat atten_quad = 0.001f;
 
 Vec4 * lightPos;
 
