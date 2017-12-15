@@ -24,7 +24,6 @@
 #define TICK 1.f/FPS
 
 #define BALL_RADIUS 0.5f
-#define NUM_BALLS 16 // best with triangle numbers + 1; Ex. 11, 16,..., 121,..., 301,...
 #define NUM_STATIC 2
 
 #define ROLL .999f // roll slowdown percentage
@@ -33,7 +32,6 @@
 #define GEN_TEXTURE1 1
 
 #define TEXTURE_WIDTH 500
-#define TEXTURE GEN_TEXTURE1
 
 clock_t global_clock_prev; // last time rendered/physics ticked
 GLfloat curr_fps;
@@ -120,7 +118,7 @@ Mat4 mv_matrix =
 GLfloat theta = 0.01f;
 GLfloat phi = M_PI/2.f;
 
-GLfloat eye_radius = (GLfloat) NUM_BALLS;
+GLfloat eye_radius;
 
 Vec4 eye = {0.f, 3.f, 3.f, 1.f};
 Vec4 at =  {0.f, 0.f, 0.f, 1.f};
@@ -139,6 +137,8 @@ ShaderModel * model_list;
 SphereEntity * physics_list;
 GLfloat boundaries;
 int num_models;
+int num_balls = 0;
+int texture = -1;
 
 void init(void)
 {
@@ -153,7 +153,7 @@ void init(void)
   }
 
   GLubyte my_texels[TEXTURE_WIDTH][TEXTURE_WIDTH][3];
-  if (TEXTURE == WOOD_TEXTURE){
+  if (texture == WOOD_TEXTURE){
     unsigned char uc;
     FILE *fp;
     fp = fopen("textures/wood_500_500.raw", "r");
@@ -170,7 +170,7 @@ void init(void)
         }
       }
     fclose(fp);
-  }else if (TEXTURE == GEN_TEXTURE1){
+  }else if (texture == GEN_TEXTURE1){
     // spotty
     GLfloat s_radius = (GLfloat) TEXTURE_WIDTH / 5.f;
     int s_num = 2 * TEXTURE_WIDTH;
@@ -345,13 +345,13 @@ void display(void)
 void modelPhysics(GLfloat delta_sec)
 {
   Vec4 tick_speed;
-  for (int i = 0; i < NUM_BALLS; i++){
+  for (int i = 0; i < num_balls; i++){
     physics_list[i].velocity.x *= ROLL;
     physics_list[i].velocity.z *= ROLL;
     scalarMultVec4(&tick_speed, &physics_list[i].velocity, delta_sec);
     addVec4(&model_list[i+NUM_STATIC].transform.w, &model_list[i+NUM_STATIC].transform.w, &tick_speed);
   }
-  sphereCollisionTick(physics_list, NUM_BALLS, boundaries, delta_sec);
+  sphereCollisionTick(physics_list, num_balls, boundaries, delta_sec);
 }
 
 void setToPoolBreak(){
@@ -361,14 +361,14 @@ void setToPoolBreak(){
   GLfloat row_offset = powf(powf(2.f*BALL_RADIUS,2.f) - powf(BALL_RADIUS,2.f),0.5f);
   Vec4 shoot_start = {-4.f * boundaries/5.f, BALL_RADIUS, 0.f, 1.f};
   Vec4 iter_pos = {boundaries/3.f, BALL_RADIUS, 0.f, 1.f};
-  while (iter < NUM_BALLS){
+  while (iter < num_balls){
     row_iter++;
     iter++;
     *physics_list[iter - 1].position = iter_pos;
     physics_list[iter - 1].velocity = (Vec4) {0.f,0.f,0.f,0.f};
-    if (iter == NUM_BALLS){
+    if (iter == num_balls){
       *physics_list[iter - 1].position = shoot_start;
-      physics_list[iter - 1].velocity = (Vec4) {BALL_RADIUS*NUM_BALLS/2.f,0.f,0.f,0.f};
+      physics_list[iter - 1].velocity = (Vec4) {BALL_RADIUS*num_balls/2.f,0.f,0.f,0.f};
     }else{
       if(row_iter%row == 0){
         row++;
@@ -427,7 +427,7 @@ void keyboard(unsigned char key, int mousex, int mousey)
   if (key == 'D') lightPos->z--;
   if (key == 'p') setToPoolBreak();
   if (key == ' ') {
-    for (int i = 0; i < NUM_BALLS; i++){
+    for (int i = 0; i < num_balls; i++){
       if (physics_list[i].velocity.x == 0.f){
         GLfloat init = (GLfloat)( 1 - (rand() % 3)) * (1.f - ROLL); 
         physics_list[i].velocity.x = init;
@@ -448,10 +448,10 @@ void genModels()
 {
   ShaderModel ground;
   ShaderModel light;
-  ShaderModel balls[NUM_BALLS];
+  ShaderModel balls[num_balls];
 
   GLfloat shine;
-  boundaries = (GLfloat)(NUM_BALLS + 1) / 2.f;
+  boundaries = (GLfloat)(num_balls + 1) / 2.f;
  
   shine = 50.f;
   
@@ -471,7 +471,7 @@ void genModels()
   int color2;
   int color3;
   Vec4 amb, spec, diff;
-  for (int i = 0; i < NUM_BALLS; i++){
+  for (int i = 0; i < num_balls; i++){
     // init model
     color1 = rand() % (NUM_COLORS);
     color2 = rand() % (NUM_COLORS);
@@ -491,25 +491,25 @@ void genModels()
     scaleZModelSM(&balls[i], &balls[i].num_vertices, BALL_RADIUS);
   }
 
-  num_models = NUM_STATIC + NUM_BALLS;
+  num_models = NUM_STATIC + num_balls;
 
   model_list = malloc(sizeof(ShaderModel) * num_models);
-  physics_list = malloc(sizeof(SphereEntity) * NUM_BALLS); 
+  physics_list = malloc(sizeof(SphereEntity) * num_balls); 
 
   model_list[0] = ground;
   model_list[1] = light;
-  for (int i = 0; i < NUM_BALLS; i++) model_list[i+NUM_STATIC] = balls[i];
+  for (int i = 0; i < num_balls; i++) model_list[i+NUM_STATIC] = balls[i];
   // init tranformations
   for (int i = 0; i < num_models; i++) identity(&model_list[i].transform);
   // init ball positions
-  for (int i = 0; i < NUM_BALLS; i++){
-    GLfloat len = (GLfloat) i - ((GLfloat)NUM_BALLS / 2.f) + 0.5f;
+  for (int i = 0; i < num_balls; i++){
+    GLfloat len = (GLfloat) i - ((GLfloat)num_balls / 2.f) + 0.5f;
     Vec4 offset = {(GLfloat) len, 0.5f, (GLfloat) len, 1.f};
     model_list[i+NUM_STATIC].transform.w = offset;
     
   }
   // init physics
-  for (int i = 0; i < NUM_BALLS; i++){
+  for (int i = 0; i < num_balls; i++){
     GLfloat speed = (GLfloat)(rand() % 1000) / 5000.f;
     GLfloat angle = fmodf((GLfloat) rand(), 2.f * M_PI);
     Vec4 vel = {speed * cosf(angle), 0.f, speed * sinf(angle), 0.f};
@@ -520,12 +520,26 @@ void genModels()
     physics_list[i].radius = BALL_RADIUS;
   }
   lightPos = &model_list[1].transform.w;
-  *lightPos = (Vec4) {(GLfloat) NUM_BALLS / 4.f, (GLfloat) NUM_BALLS / 4.f, 0.f, 1.f};
+  *lightPos = (Vec4) {(GLfloat) num_balls / 4.f, (GLfloat) num_balls / 4.f, 0.f, 1.f};
 }
 
 int main(int argc, char **argv)
 {
   srand(time(NULL)); rand();
+  // prompt user input
+  char line[5];
+  printf("Number of balls (best with triangle number + 1): ");
+  do{
+    fgets (line, sizeof(line), stdin);
+    sscanf (line, "%d", &num_balls);
+  } while (num_balls < 1);
+  printf("Texture (0 = wood, 1 = crazy): ");
+  do{
+    fgets (line, sizeof(line), stdin);
+    sscanf (line, "%d", &texture);
+  } while (texture < 0 || texture > 1);
+  eye_radius = (GLfloat) num_balls;
+
   genModels();
   flattenModelListSM(&model_list,&vertices,&num_vertices,&num_models);
 
