@@ -2,6 +2,8 @@
 
 in vec4 vPosition;
 in vec4 vNormal;
+in vec2 vTexCoord;
+out vec2 texCoord;
 out vec4 color;
 
 uniform int isShadow;
@@ -32,6 +34,7 @@ void main()
 
       color = ambient + (attenuation * (diffuse + specular));
       gl_Position = projection * model_view * pos / pos.w;
+      texCoord = vTexCoord;
     }
   else if(isShadow == 1)
     {

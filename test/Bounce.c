@@ -24,10 +24,16 @@
 #define TICK 1.f/FPS
 
 #define BALL_RADIUS 0.5f
-#define NUM_BALLS 121 // best with triangle numbers + 1; Ex. 11, 16,..., 121,..., 301,...
+#define NUM_BALLS 16 // best with triangle numbers + 1; Ex. 11, 16,..., 121,..., 301,...
 #define NUM_STATIC 2
 
 #define ROLL .999f // roll slowdown percentage
+
+#define WOOD_TEXTURE 0
+#define GEN_TEXTURE1 1
+
+#define TEXTURE_WIDTH 500
+#define TEXTURE GEN_TEXTURE1
 
 clock_t global_clock_prev; // last time rendered/physics ticked
 GLfloat curr_fps;
@@ -37,6 +43,7 @@ GLuint pj_location;
 GLuint mv_location;
 GLuint tr_location;
 GLuint is_shadow;
+GLuint is_texture;
 
 GLuint ambient_location;
 GLuint diffuse_location;
@@ -135,8 +142,87 @@ int num_models;
 
 void init(void)
 {
-  int size = 2*sizeof(Vec4)*num_vertices; //need at least double because shadows
+  // texture
+  int refs[36] = {1,0,3,1,3,2, 2,3,7,2,7,6, 3,0,4,3,4,7, 6,5,1,6,1,2, 4,5,6,4,6,7, 5,4,0,5,0,1};        // Order of vertices
+  Vec2 texCoord_ref[6] = {{1.0, 0.0}, {0.0, 0.0}, {0.0, 1.0}, {0.0, 1.0}, {1.0, 1.0}, {1.0, 0.0}};
+  int i, v_index = 0;
+  Vec2 tex_coords[36];
+  for(i = 0; i < 36; i++) {
+    tex_coords[v_index] = texCoord_ref[i % 6];
+    v_index++;
+  }
 
+  GLubyte my_texels[TEXTURE_WIDTH][TEXTURE_WIDTH][3];
+  if (TEXTURE == WOOD_TEXTURE){
+    unsigned char uc;
+    FILE *fp;
+    fp = fopen("textures/wood_500_500.raw", "r");
+    if(fp == NULL) {
+        printf("Unable to open file\n");
+        exit(0);
+      }
+    for(int i = 0; i < TEXTURE_WIDTH; i++) {
+      for(int j = 0; j < TEXTURE_WIDTH; j++) {
+        for(int k = 0; k < 3; k++) {
+            fread(&uc, 1, 1, fp);
+            my_texels[i][j][k] = uc;
+          }
+        }
+      }
+    fclose(fp);
+  }else if (TEXTURE == GEN_TEXTURE1){
+    // spotty
+    GLfloat s_radius = (GLfloat) TEXTURE_WIDTH / 5.f;
+    int s_num = 2 * TEXTURE_WIDTH;
+    int s_pos[s_num][2];
+    Vec4 s_color[s_num];
+    for (int s = 0; s < s_num; s++){
+      scalarMultVec4(&s_color[s], &diffuse[rand()%(NUM_COLORS)], 1.f);
+      s_pos[s][0] = -(int)s_radius + rand()%(TEXTURE_WIDTH + 2 * (int)s_radius);
+      s_pos[s][1] = -(int)s_radius + rand()%(TEXTURE_WIDTH + 2 * (int)s_radius);
+    }
+    Vec4 inter_color, intra_color;
+    int mask = 0xFF;
+    for(int i = 0; i < TEXTURE_WIDTH; i++) {
+      for(int j = 0; j < TEXTURE_WIDTH; j++) {
+        inter_color = (Vec4){0.f,0.f,0.f,0.f};
+        for (int s = 0; s < s_num; s++){
+          GLfloat diff =(s_radius -
+                         powf(((i - s_pos[s][0]) * (i - s_pos[s][0])) +
+                              ((j - s_pos[s][1]) * (j - s_pos[s][1])), 0.5f))/
+                         s_radius;
+            if(diff > 0){
+              scalarMultVec4(&intra_color, &s_color[s], diff);
+              addVec4(&inter_color, &inter_color, &intra_color);
+            }
+        }
+        scalarMultVec4(&inter_color, &inter_color, 256);
+        my_texels[i][j][0] =  (GLubyte) (mask & ((int) inter_color.x))/5;
+        my_texels[i][j][1] =  (GLubyte) (mask & ((int) inter_color.y))/5;
+        my_texels[i][j][2] =  (GLubyte) (mask & ((int) inter_color.z))/5;
+        }
+    }
+  }
+  GLuint mytex;
+  glGenTextures(1, &mytex);
+  glBindTexture(GL_TEXTURE_2D, mytex);
+  glTexImage2D(GL_TEXTURE_2D,
+               0,
+               GL_RGB,
+               TEXTURE_WIDTH,     // Width
+               TEXTURE_WIDTH,     // Height
+               0,
+               GL_RGB,
+               GL_UNSIGNED_BYTE,
+               my_texels);
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+
+  // other
+  int size = 2*sizeof(Vec4)*num_vertices; //need at least double because shadows
+  
   GLuint program = initShader("shaders/vshader.glsl", "shaders/fshader.glsl");
   glUseProgram(program);
   GLuint vao;
@@ -146,9 +232,10 @@ void init(void)
   GLuint buffer;
   glGenBuffers(1, &buffer);
   glBindBuffer(GL_ARRAY_BUFFER, buffer);
-  glBufferData(GL_ARRAY_BUFFER, 2 * size, NULL, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 2 * size + sizeof(Vec2)*36, NULL, GL_STATIC_DRAW);
   glBufferSubData(GL_ARRAY_BUFFER, 0, size, vertices);
   glBufferSubData(GL_ARRAY_BUFFER, size, size, vertices);
+  glBufferSubData(GL_ARRAY_BUFFER, size*2, sizeof(Vec2)*36, tex_coords);
 
   GLuint vPosition = glGetAttribLocation(program, "vPosition");
   glEnableVertexAttribArray(vPosition);
@@ -158,7 +245,12 @@ void init(void)
   glEnableVertexAttribArray(vNormal);
   glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, sizeof(Vec4), (GLvoid *) size);
 
+  GLuint vTexCoord = glGetAttribLocation(program, "vTexCoord");
+  glEnableVertexAttribArray(vTexCoord);
+  glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, sizeof(Vec2), (GLvoid *)(size*2));
+
   is_shadow = glGetUniformLocation(program, "isShadow");
+  is_texture = glGetUniformLocation(program, "isTexture");
 
   pj_location = glGetUniformLocation(program, "projection");
   mv_location = glGetUniformLocation(program, "model_view");
@@ -175,6 +267,7 @@ void init(void)
   atten_linear_location = glGetUniformLocation(program, "attenuation_linear");
   atten_quad_location = glGetUniformLocation(program, "attenuation_quadratic");
 
+  glUniform1i(glGetUniformLocation(program, "texture"), 0);
   glEnable(GL_DEPTH_TEST);
   glClearColor(0.f, 0.f, 0.f, 1.f);
   glDepthRange(1,0);
@@ -215,6 +308,11 @@ void display(void)
   vc = 0;
   for (int i = 0; i < num_models; i++)
     {
+      if (i == 0){
+        glUniform1i(is_texture,0);
+      }else{
+        glUniform1i(is_texture,1);
+      }
       glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
       glUniform4fv(ambient_location, 1, (GLfloat *) &model_list[i].ambient);
       glUniform4fv(diffuse_location, 1, (GLfloat *) &model_list[i].diffuse);
@@ -229,8 +327,9 @@ void display(void)
   vc += model_list[0].num_vertices;
   vc += model_list[1].num_vertices;
   for (int i = NUM_STATIC; i < num_models; i++){
-    glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
+    glUniform1i(is_texture,1);
     glUniform1i(is_shadow,1);
+    glUniformMatrix4fv(tr_location, 1, GL_FALSE, (GLfloat *) &model_list[i].transform);
     glDrawArrays(GL_TRIANGLES, vc, model_list[i].num_vertices);
     vc += model_list[i].num_vertices;
   }

@@ -4,6 +4,12 @@
 #include <stdio.h>
 #include <math.h>
 
+typedef struct Vec2
+{
+  float x;
+  float y;
+} Vec2;
+
 typedef struct Vec4
 {
   float x;
